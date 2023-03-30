@@ -5,6 +5,7 @@ import {
   RegistrationCenterSchema,
 } from '../schemas/registrationCenter.schema';
 import { RegistrationCenterService } from '../services/registrationCenter.service';
+import { RegistrationCenterController } from '../controllers/registrationCenter.controller';
 
 @Module({
   imports: [
@@ -13,5 +14,6 @@ import { RegistrationCenterService } from '../services/registrationCenter.servic
     ]),
   ],
   providers: [RegistrationCenterService],
+  controllers: [RegistrationCenterController],
 })
 export class RegistrationCenterModule {}
