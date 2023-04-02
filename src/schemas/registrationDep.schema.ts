@@ -7,6 +7,9 @@ export type RegistrationDepDocument = HydratedDocument<RegistrationDep>;
 export class RegistrationDep {
   @Prop({ required: true })
   name: string;
+
+  @Prop({ required: true })
+  password: string;
 }
 
 export const RegistrationDepSchema =

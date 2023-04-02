@@ -7,7 +7,19 @@ export type RegistrationCenterDocument = HydratedDocument<RegistrationCenter>;
 @Schema()
 export class RegistrationCenter {
   @Prop({ required: true })
+  centerId: string;
+
+  @Prop({ required: true })
+  password: string;
+
+  @Prop({ required: true })
   name: string;
+
+  @Prop({ required: true })
+  location: string;
+
+  @Prop({ required: true })
+  phoneNumber: string;
 
   @Prop({
     required: true,
