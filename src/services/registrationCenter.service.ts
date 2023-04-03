@@ -37,8 +37,7 @@ export class RegistrationCenterService {
         return res;
       }
       return 'Wrong Password';
-    } else {
-      return 'Center ID does not exist';
     }
+    return 'Center ID does not exist';
   }
 }

@@ -14,12 +14,26 @@ export class RegistrationDepService {
     private registrationDepModel: Model<RegistrationDepDocument>,
   ) {}
 
+  async findAll(): Promise<RegistrationDep[]> {
+    return this.registrationDepModel.find().exec();
+  }
+
   async create(registrationDep: IRegistrationDep): Promise<RegistrationDep> {
     const createdDep = new this.registrationDepModel(registrationDep);
     return createdDep.save();
   }
 
-  async findAll(): Promise<RegistrationDep[]> {
-    return this.registrationDepModel.find().exec();
+  async login(registrationDep: IRegistrationDep): Promise<any> {
+    const res = await this.registrationDepModel.findOne({
+      name: registrationDep.name,
+    });
+
+    if (res) {
+      if (res.password === registrationDep.password) {
+        return res;
+      }
+      return 'Wrong Password';
+    }
+    return 'Department does not exist';
   }
 }
