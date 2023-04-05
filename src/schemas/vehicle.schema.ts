@@ -1,5 +1,7 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { HydratedDocument, ObjectId } from 'mongoose';
+import mongoose, { HydratedDocument, ObjectId } from 'mongoose';
+import { RegistrationCenter } from './registrationCenter.schema';
+import { VehicleOwner } from './vehicleOwner.schema';
 
 export type VehicleDocument = HydratedDocument<Vehicle>;
 
@@ -8,8 +10,12 @@ export class Vehicle {
   @Prop({ required: true })
   licensePlate: string;
 
-  @Prop({ required: true, ref: 'vehicleOwner' })
-  vehicleOwner: ObjectId;
+  @Prop({
+    required: true,
+    ref: VehicleOwner.name,
+    type: mongoose.Schema.Types.ObjectId,
+  })
+  vehicleOwner: VehicleOwner;
 
   @Prop({ required: true })
   manufacturer: string;
@@ -43,10 +49,14 @@ export class Vehicle {
   torque: number;
 
   @Prop({ required: true })
-  gearBox: string;
+  gearbox: string;
 
-  @Prop({ required: true, ref: 'registrationCenter' })
-  registrationCenter: ObjectId;
+  @Prop({
+    required: true,
+    ref: RegistrationCenter.name,
+    type: mongoose.Schema.Types.ObjectId,
+  })
+  registrationCenter: RegistrationCenter;
 }
 
 export const VehicleSchema = SchemaFactory.createForClass(Vehicle);

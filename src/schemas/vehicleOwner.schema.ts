@@ -9,7 +9,7 @@ export class VehicleOwner {
   name: string;
 
   @Prop({ required: true, enum: ['personal', 'company'] })
-  ownerType: ObjectId;
+  ownerType: string;
 
   @Prop()
   cid: string;

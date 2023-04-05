@@ -4,6 +4,8 @@ import { AppController } from '../controllers/app.controller';
 import { AppService } from '../services/app.service';
 import { RegistrationCenterModule } from './registrationCenter.module';
 import { RegistrationDepModule } from './registrationDep.module';
+import { VehicleModule } from './vehicle.module';
+import { VehicleOwnerModule } from './vehicleOwner.module';
 
 @Module({
   imports: [
@@ -12,6 +14,8 @@ import { RegistrationDepModule } from './registrationDep.module';
     ),
     RegistrationDepModule,
     RegistrationCenterModule,
+    VehicleModule,
+    VehicleOwnerModule,
   ],
   controllers: [AppController],
   providers: [AppService],
