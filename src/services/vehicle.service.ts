@@ -14,6 +14,17 @@ export class VehicleService {
     return this.vehicleModel.find().exec();
   }
 
+  async findExpired(): Promise<Vehicle[]> {
+    const currentDate = new Date();
+    return this.vehicleModel
+      .find({
+        $expr: {
+          $lt: [new Date('$registrationDate').getTime(), currentDate.getTime()],
+        },
+      })
+      .exec();
+  }
+
   async create(vehicle: IVehicle): Promise<Vehicle> {
     const newVehicle = new this.vehicleModel(vehicle);
     return newVehicle.save();
@@ -22,5 +33,11 @@ export class VehicleService {
   async createMany(vehicles: IVehicle[]): Promise<void> {
     const res = await this.vehicleModel.insertMany(vehicles);
     console.log(res);
+  }
+
+  async deleteById(id: string): Promise<void> {
+    await this.vehicleModel.findByIdAndDelete(id).catch((error) => {
+      throw error;
+    });
   }
 }

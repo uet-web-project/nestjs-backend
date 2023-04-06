@@ -11,7 +11,7 @@ export class VehicleOwner {
   @Prop({ required: true, enum: ['personal', 'company'] })
   ownerType: string;
 
-  @Prop()
+  @Prop({ unique: true })
   cid: string;
 }
 
