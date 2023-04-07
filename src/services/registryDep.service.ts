@@ -36,4 +36,10 @@ export class RegistrationDepService {
     }
     return 'Department does not exist';
   }
+
+  async deleteById(id: string): Promise<void> {
+    await this.registrationDepModel.findByIdAndDelete(id).catch((error) => {
+      throw error;
+    });
+  }
 }

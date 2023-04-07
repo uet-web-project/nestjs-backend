@@ -1,4 +1,12 @@
-import { Body, Controller, Get, Post, Res } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Post,
+  Res,
+  Param,
+} from '@nestjs/common';
 import { RegistrationDepService } from '../services/registryDep.service';
 import { IRegistrationDep } from '../interfaces/registrationDep.interface';
 
@@ -23,5 +31,15 @@ export class RegistrationDepController {
       res.status(404).json(response);
     }
     res.status(200).json(response);
+  }
+
+  @Delete(':id')
+  async deleteById(@Param('id') id, @Res() res): Promise<void> {
+    try {
+      await this.registrationDepService.deleteById(id);
+      res.status(200).json('Department deleted');
+    } catch (error) {
+      res.status(404).json('Error deleting department');
+    }
   }
 }

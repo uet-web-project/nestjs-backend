@@ -40,4 +40,10 @@ export class RegistrationCenterService {
     }
     return 'Center ID does not exist';
   }
+
+  async deleteById(id: string): Promise<void> {
+    await this.registrationCenterModel.findByIdAndDelete(id).catch((error) => {
+      throw error;
+    });
+  }
 }

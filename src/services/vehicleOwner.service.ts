@@ -22,4 +22,10 @@ export class VehicleOwnerService {
     const newOwner = new this.vehicleOwnerModel(owner);
     return newOwner.save();
   }
+
+  async deleteById(id: string): Promise<void> {
+    await this.vehicleOwnerModel.findByIdAndDelete(id).catch((error) => {
+      throw error;
+    });
+  }
 }
