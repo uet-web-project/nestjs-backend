@@ -25,6 +25,14 @@ export class VehicleService {
       .exec();
   }
 
+  async findByRegistrationCenter(centerId: string): Promise<Vehicle[]> {
+    return this.vehicleModel.find({ registrationCenter: centerId }).exec();
+  }
+
+  async findByVehicleType(vehicleType: string): Promise<Vehicle[]> {
+    return this.vehicleModel.find({ vehicleType: vehicleType }).exec();
+  }
+
   async create(vehicle: IVehicle): Promise<Vehicle> {
     const newVehicle = new this.vehicleModel(vehicle);
     return newVehicle.save();
