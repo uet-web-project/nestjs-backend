@@ -16,12 +16,20 @@ export class VehicleOwnerController {
 
   @Get()
   async findAll(@Res() res): Promise<void> {
-    res.status(200).json(await this.vehicleOwnerService.findAll());
+    try {
+      res.status(200).json(await this.vehicleOwnerService.findAll());
+    } catch (error) {
+      res.status(404).json('Error getting owners');
+    }
   }
 
   @Post()
   async create(@Body() body: IVehicleOwner, @Res() res): Promise<void> {
-    res.status(200).json(await this.vehicleOwnerService.create(body));
+    try {
+      res.status(200).json(await this.vehicleOwnerService.create(body));
+    } catch (error) {
+      res.status(404).json('Error creating owner');
+    }
   }
 
   @Delete(':id')

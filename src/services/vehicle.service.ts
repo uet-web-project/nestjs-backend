@@ -44,8 +44,6 @@ export class VehicleService {
   }
 
   async deleteById(id: string): Promise<void> {
-    await this.vehicleModel.findByIdAndDelete(id).catch((error) => {
-      throw error;
-    });
+    await this.vehicleModel.findByIdAndDelete(id).exec();
   }
 }

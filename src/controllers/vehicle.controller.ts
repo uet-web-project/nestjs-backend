@@ -5,11 +5,9 @@ import {
   Get,
   Param,
   Post,
-  Req,
   Res,
 } from '@nestjs/common';
 import { VehicleService } from '../services/vehicle.service';
-import { Vehicle } from '../schemas/vehicle.schema';
 
 @Controller('vehicle')
 export class VehicleController {
