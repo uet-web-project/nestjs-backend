@@ -6,7 +6,7 @@ export type RegistrationCenterDocument = HydratedDocument<RegistrationCenter>;
 
 @Schema()
 export class RegistrationCenter {
-  @Prop({ required: true })
+  @Prop({ required: true, unique: true })
   centerId: string;
 
   @Prop({ required: true })
