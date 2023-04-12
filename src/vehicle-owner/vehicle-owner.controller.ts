@@ -6,14 +6,17 @@ import {
   Post,
   Res,
   Param,
+  UseGuards,
 } from '@nestjs/common';
 import { VehicleOwnerService } from './vehicle-owner.service';
 import { IVehicleOwner } from '../interfaces/vehicleOwner.interface';
+import { AuthGuard } from '../auth/auth.guard';
 
 @Controller('vehicle-owner')
 export class VehicleOwnerController {
   constructor(private vehicleOwnerService: VehicleOwnerService) {}
 
+  @UseGuards(AuthGuard)
   @Get()
   async findAll(@Res() res): Promise<void> {
     try {
@@ -23,6 +26,7 @@ export class VehicleOwnerController {
     }
   }
 
+  @UseGuards(AuthGuard)
   @Post()
   async create(@Body() body: IVehicleOwner, @Res() res): Promise<void> {
     try {
@@ -32,6 +36,7 @@ export class VehicleOwnerController {
     }
   }
 
+  @UseGuards(AuthGuard)
   @Delete(':id')
   async deleteById(@Param('id') id, @Res() res): Promise<void> {
     try {

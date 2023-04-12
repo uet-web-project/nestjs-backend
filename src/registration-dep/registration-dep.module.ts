@@ -15,5 +15,6 @@ import { RegistrationDepController } from './registration-dep.controller';
   ],
   providers: [RegistrationDepService],
   controllers: [RegistrationDepController],
+  exports: [RegistrationDepService],
 })
 export class RegistrationDepModule {}

@@ -1,13 +1,32 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { RegistrationCenterService } from '../registration-center/registration-center.service';
+import { RegistrationDepService } from '../registration-dep/registration-dep.service';
 import { JwtService } from '@nestjs/jwt';
 
 @Injectable()
 export class AuthService {
   constructor(
     private registrationCenterService: RegistrationCenterService,
+    private registrationDepService: RegistrationDepService,
     private jwtService: JwtService,
   ) {}
+
+  async regDepLogin(depName: string, pass: string): Promise<any> {
+    const dep = await this.registrationDepService.findByDepName(depName);
+    if (dep?.password !== pass) {
+      throw new UnauthorizedException();
+    }
+
+    const payload = {
+      _id: dep?._id,
+      name: dep?.name,
+    };
+
+    return {
+      access_token: await this.jwtService.signAsync(payload),
+    };
+  }
+
   async regCenterLogin(centerId: string, pass: string): Promise<any> {
     const center = await this.registrationCenterService.findByCenterId(
       centerId,
@@ -24,8 +43,6 @@ export class AuthService {
       phoneNumber: center?.phoneNumber,
     };
 
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const { password, ...result } = center;
     return {
       access_token: await this.jwtService.signAsync(payload),
     };

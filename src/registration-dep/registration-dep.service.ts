@@ -18,6 +18,10 @@ export class RegistrationDepService {
     return this.registrationDepModel.find().exec();
   }
 
+  async findByDepName(depName: string): Promise<RegistrationDep> {
+    return this.registrationDepModel.findOne({ name: depName }).exec();
+  }
+
   async create(registrationDep: IRegistrationDep): Promise<RegistrationDep> {
     const createdDep = new this.registrationDepModel(registrationDep);
     return createdDep.save();

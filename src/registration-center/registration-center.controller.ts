@@ -17,6 +17,7 @@ import { RegistrationCenter } from '../schemas/registration-center.schema';
 export class RegistrationCenterController {
   constructor(private registrationCenterService: RegistrationCenterService) {}
 
+  @UseGuards(AuthGuard)
   @Get()
   async findAll(@Res() res): Promise<void> {
     try {
@@ -32,6 +33,7 @@ export class RegistrationCenterController {
     return req.data;
   }
 
+  @UseGuards(AuthGuard)
   @Post()
   async create(@Body() body, @Res() res): Promise<void> {
     try {
@@ -41,6 +43,7 @@ export class RegistrationCenterController {
     }
   }
 
+  @UseGuards(AuthGuard)
   @Post('login')
   async login(@Body() body, @Res() res): Promise<void> {
     try {
@@ -54,6 +57,7 @@ export class RegistrationCenterController {
     }
   }
 
+  @UseGuards(AuthGuard)
   @Delete(':id')
   async deleteById(@Param('id') id, @Res() res): Promise<void> {
     try {

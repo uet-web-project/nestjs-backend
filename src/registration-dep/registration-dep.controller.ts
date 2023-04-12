@@ -4,16 +4,20 @@ import {
   Delete,
   Get,
   Post,
+  Req,
   Res,
   Param,
+  UseGuards,
 } from '@nestjs/common';
 import { RegistrationDepService } from './registration-dep.service';
 import { IRegistrationDep } from '../interfaces/registrationDep.interface';
+import { AuthGuard } from '../auth/auth.guard';
 
 @Controller('registration-dep')
 export class RegistrationDepController {
   constructor(private registrationDepService: RegistrationDepService) {}
 
+  @UseGuards(AuthGuard)
   @Get()
   async findAll(@Res() res): Promise<void> {
     try {
@@ -23,6 +27,13 @@ export class RegistrationDepController {
     }
   }
 
+  @UseGuards(AuthGuard)
+  @Get('profile')
+  async getProfile(@Req() req): Promise<IRegistrationDep> {
+    return req.data;
+  }
+
+  @UseGuards(AuthGuard)
   @Post()
   async create(@Body() data: IRegistrationDep, @Res() res): Promise<void> {
     try {
@@ -32,6 +43,7 @@ export class RegistrationDepController {
     }
   }
 
+  @UseGuards(AuthGuard)
   @Post('login')
   async login(@Body() data: IRegistrationDep, @Res() res): Promise<void> {
     try {
@@ -45,6 +57,7 @@ export class RegistrationDepController {
     }
   }
 
+  @UseGuards(AuthGuard)
   @Delete(':id')
   async deleteById(@Param('id') id, @Res() res): Promise<void> {
     try {
