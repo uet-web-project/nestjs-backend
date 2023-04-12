@@ -1,11 +1,11 @@
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
-import { AppController } from '../controllers/app.controller';
-import { AppService } from '../services/app.service';
-import { RegistrationCenterModule } from './registrationCenter.module';
-import { RegistrationDepModule } from './registrationDep.module';
-import { VehicleModule } from './vehicle.module';
-import { VehicleOwnerModule } from './vehicleOwner.module';
+import { AppController } from './app.controller';
+import { AppService } from './app.service';
+import { RegistrationCenterModule } from './registration-center/registration-center.module';
+import { RegistrationDepModule } from './registration-dep/registration-dep.module';
+import { VehicleModule } from './vehicle/vehicle.module';
+import { VehicleOwnerModule } from './vehicle-owner/vehicle-owner.module';
 
 @Module({
   imports: [

@@ -7,7 +7,7 @@ import {
   Res,
   Param,
 } from '@nestjs/common';
-import { RegistrationDepService } from '../services/registryDep.service';
+import { RegistrationDepService } from './registration-dep.service';
 import { IRegistrationDep } from '../interfaces/registrationDep.interface';
 
 @Controller('registration-dep')

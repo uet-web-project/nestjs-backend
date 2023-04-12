@@ -4,8 +4,8 @@ import {
   RegistrationDep,
   RegistrationDepSchema,
 } from '../schemas/registrationDep.schema';
-import { RegistrationDepService } from '../services/registryDep.service';
-import { RegistrationDepController } from '../controllers/registrationDep.controller';
+import { RegistrationDepService } from './registration-dep.service';
+import { RegistrationDepController } from './registration-dep.controller';
 
 @Module({
   imports: [

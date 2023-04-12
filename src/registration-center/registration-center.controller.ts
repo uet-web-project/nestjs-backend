@@ -7,7 +7,7 @@ import {
   Delete,
   Param,
 } from '@nestjs/common';
-import { RegistrationCenterService } from '../services/registrationCenter.service';
+import { RegistrationCenterService } from './registration-center.service';
 
 @Controller('registration-center')
 export class RegistrationCenterController {

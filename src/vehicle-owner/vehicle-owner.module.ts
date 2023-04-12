@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
-import { VehicleOwnerService } from '../services/vehicleOwner.service';
-import { VehicleOwnerController } from '../controllers/vehicleOwner.controller';
+import { VehicleOwnerService } from './vehicle-owner.service';
+import { VehicleOwnerController } from './vehicle-owner.controller';
 import {
   VehicleOwner,
   VehicleOwnerSchema,

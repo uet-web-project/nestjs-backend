@@ -7,7 +7,7 @@ import {
   Post,
   Res,
 } from '@nestjs/common';
-import { VehicleService } from '../services/vehicle.service';
+import { VehicleService } from './vehicle.service';
 
 @Controller('vehicle')
 export class VehicleController {

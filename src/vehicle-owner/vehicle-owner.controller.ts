@@ -7,7 +7,7 @@ import {
   Res,
   Param,
 } from '@nestjs/common';
-import { VehicleOwnerService } from '../services/vehicleOwner.service';
+import { VehicleOwnerService } from './vehicle-owner.service';
 import { IVehicleOwner } from '../interfaces/vehicleOwner.interface';
 
 @Controller('vehicle-owner')

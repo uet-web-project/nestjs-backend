@@ -1,12 +1,11 @@
 import { Model } from 'mongoose';
-import { HttpCode, Injectable } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import {
   RegistrationCenter,
   RegistrationCenterDocument,
 } from 'src/schemas/registrationCenter.schema';
 import { IRegistrationCenter } from '../interfaces/registrationCenter.interface';
-import { response } from 'express';
 
 @Injectable()
 export class RegistrationCenterService {

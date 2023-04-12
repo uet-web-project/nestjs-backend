@@ -4,8 +4,8 @@ import {
   RegistrationCenter,
   RegistrationCenterSchema,
 } from '../schemas/registrationCenter.schema';
-import { RegistrationCenterService } from '../services/registrationCenter.service';
-import { RegistrationCenterController } from '../controllers/registrationCenter.controller';
+import { RegistrationCenterController } from './registration-center.controller';
+import { RegistrationCenterService } from './registration-center.service';
 
 @Module({
   imports: [
