@@ -11,7 +11,7 @@ import {
 } from '@nestjs/common';
 import { RegistrationCenterService } from './registration-center.service';
 import { AuthGuard } from '../auth/auth.guard';
-import { RegistrationCenter } from '../schemas/registrationCenter.schema';
+import { RegistrationCenter } from '../schemas/registration-center.schema';
 
 @Controller('registration-center')
 export class RegistrationCenterController {

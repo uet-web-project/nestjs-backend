@@ -17,12 +17,15 @@ export class AuthService {
     }
 
     const payload = {
+      _id: center?._id,
+      centerId: center?.centerId,
       name: center?.name,
-      centerId: centerId,
+      location: center?.location,
+      phoneNumber: center?.phoneNumber,
     };
+
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { password, ...result } = center;
-    // TODO: generate JWT and return it
     return {
       access_token: await this.jwtService.signAsync(payload),
     };

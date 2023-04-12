@@ -3,7 +3,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import {
   VehicleOwner,
   VehicleOwnerDocument,
-} from '../schemas/vehicleOwner.schema';
+} from '../schemas/vehicle-owner.schema';
 import { Model } from 'mongoose';
 import { IVehicleOwner } from '../interfaces/vehicleOwner.interface';
 

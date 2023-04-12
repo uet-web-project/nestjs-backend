@@ -3,7 +3,7 @@ import { MongooseModule } from '@nestjs/mongoose';
 import {
   RegistrationDep,
   RegistrationDepSchema,
-} from '../schemas/registrationDep.schema';
+} from '../schemas/registration-dep.schema';
 import { RegistrationDepService } from './registration-dep.service';
 import { RegistrationDepController } from './registration-dep.controller';
 

@@ -1,12 +1,15 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import mongoose, { HydratedDocument } from 'mongoose';
-import { RegistrationCenter } from './registrationCenter.schema';
-import { VehicleOwner } from './vehicleOwner.schema';
+import { RegistrationCenter } from './registration-center.schema';
+import { VehicleOwner } from './vehicle-owner.schema';
 
 export type VehicleDocument = HydratedDocument<Vehicle>;
 
 @Schema()
 export class Vehicle {
+  @Prop({ type: mongoose.Schema.Types.ObjectId })
+  _id: mongoose.Schema.Types.ObjectId;
+
   @Prop({ required: true, unique: true })
   registrationNumber: string;
 

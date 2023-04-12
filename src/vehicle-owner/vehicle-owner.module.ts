@@ -5,7 +5,7 @@ import { VehicleOwnerController } from './vehicle-owner.controller';
 import {
   VehicleOwner,
   VehicleOwnerSchema,
-} from '../schemas/vehicleOwner.schema';
+} from '../schemas/vehicle-owner.schema';
 
 @Module({
   imports: [

@@ -4,7 +4,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import {
   RegistrationDep,
   RegistrationDepDocument,
-} from '../schemas/registrationDep.schema';
+} from '../schemas/registration-dep.schema';
 import { IRegistrationDep } from '../interfaces/registrationDep.interface';
 
 @Injectable()
