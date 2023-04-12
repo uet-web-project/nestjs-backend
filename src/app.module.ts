@@ -6,6 +6,7 @@ import { RegistrationCenterModule } from './registration-center/registration-cen
 import { RegistrationDepModule } from './registration-dep/registration-dep.module';
 import { VehicleModule } from './vehicle/vehicle.module';
 import { VehicleOwnerModule } from './vehicle-owner/vehicle-owner.module';
+import { AuthModule } from './auth/auth.module';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { VehicleOwnerModule } from './vehicle-owner/vehicle-owner.module';
     RegistrationCenterModule,
     VehicleModule,
     VehicleOwnerModule,
+    AuthModule,
   ],
   controllers: [AppController],
   providers: [AppService],

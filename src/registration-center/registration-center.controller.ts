@@ -6,8 +6,12 @@ import {
   Res,
   Delete,
   Param,
+  UseGuards,
+  Req,
 } from '@nestjs/common';
 import { RegistrationCenterService } from './registration-center.service';
+import { AuthGuard } from '../auth/auth.guard';
+import { RegistrationCenter } from '../schemas/registrationCenter.schema';
 
 @Controller('registration-center')
 export class RegistrationCenterController {
@@ -20,6 +24,12 @@ export class RegistrationCenterController {
     } catch (error) {
       res.status(404).json(error);
     }
+  }
+
+  @UseGuards(AuthGuard)
+  @Get('profile')
+  async getProfile(@Req() req): Promise<RegistrationCenter> {
+    return req.data;
   }
 
   @Post()

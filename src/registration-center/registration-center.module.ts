@@ -15,5 +15,6 @@ import { RegistrationCenterService } from './registration-center.service';
   ],
   providers: [RegistrationCenterService],
   controllers: [RegistrationCenterController],
+  exports: [RegistrationCenterService],
 })
 export class RegistrationCenterModule {}
