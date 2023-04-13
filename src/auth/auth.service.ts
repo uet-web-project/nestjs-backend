@@ -12,7 +12,7 @@ export class AuthService {
   ) {}
 
   async regDepLogin(depName: string, pass: string): Promise<any> {
-    const dep = await this.registrationDepService.findByDepName(depName);
+    const dep: any = await this.registrationDepService.findByDepName(depName);
     if (dep?.password !== pass) {
       throw new UnauthorizedException();
     }
@@ -28,7 +28,7 @@ export class AuthService {
   }
 
   async regCenterLogin(centerId: string, pass: string): Promise<any> {
-    const center = await this.registrationCenterService.findByCenterId(
+    const center: any = await this.registrationCenterService.findByCenterId(
       centerId,
     );
     if (center?.password !== pass) {
@@ -41,6 +41,7 @@ export class AuthService {
       name: center?.name,
       location: center?.location,
       phoneNumber: center?.phoneNumber,
+      registrationDep: center?.registrationDep,
     };
 
     return {

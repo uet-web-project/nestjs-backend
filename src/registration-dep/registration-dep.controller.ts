@@ -17,7 +17,6 @@ import { AuthGuard } from '../auth/auth.guard';
 export class RegistrationDepController {
   constructor(private registrationDepService: RegistrationDepService) {}
 
-  @UseGuards(AuthGuard)
   @Get()
   async findAll(@Res() res): Promise<void> {
     try {

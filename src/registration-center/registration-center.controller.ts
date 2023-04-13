@@ -17,7 +17,6 @@ import { RegistrationCenter } from '../schemas/registration-center.schema';
 export class RegistrationCenterController {
   constructor(private registrationCenterService: RegistrationCenterService) {}
 
-  @UseGuards(AuthGuard)
   @Get()
   async findAll(@Res() res): Promise<void> {
     try {

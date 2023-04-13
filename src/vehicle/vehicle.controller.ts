@@ -15,19 +15,16 @@ import { AuthGuard } from '../auth/auth.guard';
 export class VehicleController {
   constructor(private vehicleService: VehicleService) {}
 
-  @UseGuards(AuthGuard)
   @Get()
   async findAll(@Res() res): Promise<void> {
     res.status(200).json(await this.vehicleService.findAll());
   }
 
-  @UseGuards(AuthGuard)
   @Get('expired')
   async findExpired(@Res() res): Promise<void> {
     res.status(200).json(await this.vehicleService.findExpired());
   }
 
-  @UseGuards(AuthGuard)
   @Get('get-by-registration-center/:id')
   async findByRegistrationCenter(@Param('id') id, @Res() res): Promise<void> {
     try {
@@ -39,7 +36,6 @@ export class VehicleController {
     }
   }
 
-  @UseGuards(AuthGuard)
   @Get('get-by-vehicle-type/:vehicleType')
   async findByVehicleType(
     @Param('vehicleType') vehicleType,

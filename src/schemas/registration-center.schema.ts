@@ -6,9 +6,6 @@ export type RegistrationCenterDocument = HydratedDocument<RegistrationCenter>;
 
 @Schema()
 export class RegistrationCenter {
-  @Prop({ type: mongoose.Schema.Types.ObjectId })
-  _id: mongoose.Schema.Types.ObjectId;
-
   @Prop({ required: true, unique: true })
   centerId: string;
 
