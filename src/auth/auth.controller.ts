@@ -1,4 +1,4 @@
-import { Body, Controller, Post, Res } from '@nestjs/common';
+import { Body, Controller, Get, Param, Post, Res } from '@nestjs/common';
 import { AuthService } from './auth.service';
 
 @Controller('auth')
@@ -30,6 +30,15 @@ export class AuthController {
         .json(
           await this.authService.regCenterLogin(data.centerId, data.password),
         );
+    } catch (error) {
+      res.status(404).json(error);
+    }
+  }
+
+  @Get(':token')
+  async checkToken(@Param('token') token, @Res() res): Promise<void> {
+    try {
+      res.status(200).json(await this.authService.checkToken(token));
     } catch (error) {
       res.status(404).json(error);
     }

@@ -48,4 +48,8 @@ export class AuthService {
       access_token: await this.jwtService.signAsync(payload),
     };
   }
+
+  async checkToken(token: string): Promise<any> {
+    return await this.jwtService.verifyAsync(token);
+  }
 }
