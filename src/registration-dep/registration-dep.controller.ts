@@ -17,6 +17,11 @@ import { AuthGuard } from '../auth/auth.guard';
 export class RegistrationDepController {
   constructor(private registrationDepService: RegistrationDepService) {}
 
+  @Get('get-fake-data')
+  async genFakeData(): Promise<void> {
+    await this.registrationDepService.genFakeData();
+  }
+
   @Get()
   async findAll(@Res() res): Promise<void> {
     try {
@@ -54,6 +59,11 @@ export class RegistrationDepController {
     } catch (error) {
       res.status(404).json(error);
     }
+  }
+
+  @Delete('delete-all-fake-data')
+  async deleteAllFakeData(): Promise<void> {
+    await this.registrationDepService.deleteAllFakeData();
   }
 
   @UseGuards(AuthGuard)

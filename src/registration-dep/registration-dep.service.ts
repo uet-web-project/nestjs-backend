@@ -7,6 +7,9 @@ import {
 } from '../schemas/registration-dep.schema';
 import { IRegistrationDep } from '../interfaces/registrationDep.interface';
 
+import { faker } from '@faker-js/faker';
+import { ObjectId } from 'bson';
+
 @Injectable()
 export class RegistrationDepService {
   constructor(
@@ -45,5 +48,21 @@ export class RegistrationDepService {
     await this.registrationDepModel.findByIdAndDelete(id).catch((error) => {
       throw error;
     });
+  }
+
+  async genFakeData(): Promise<void> {
+    const fakeData: IRegistrationDep[] = [];
+    for (let i = 0; i < 25; i++) {
+      fakeData.push({
+        _id: new ObjectId().toString(),
+        name: faker.company.name(),
+        password: faker.internet.password(8, true),
+      });
+    }
+    await this.registrationDepModel.insertMany(fakeData);
+  }
+
+  async deleteAllFakeData(): Promise<void> {
+    await this.registrationDepModel.deleteMany({});
   }
 }

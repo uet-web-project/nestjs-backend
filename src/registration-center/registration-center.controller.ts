@@ -17,6 +17,11 @@ import { RegistrationCenter } from '../schemas/registration-center.schema';
 export class RegistrationCenterController {
   constructor(private registrationCenterService: RegistrationCenterService) {}
 
+  @Get('get-fake-data')
+  async genFakeData(): Promise<void> {
+    await this.registrationCenterService.genFakeData();
+  }
+
   @Get()
   async findAll(@Res() res): Promise<void> {
     try {
@@ -54,6 +59,11 @@ export class RegistrationCenterController {
     } catch (error) {
       res.status(404).json(error);
     }
+  }
+
+  @Delete('delete-all-fake-data')
+  async deleteAllFakeData(): Promise<void> {
+    await this.registrationCenterService.deleteAllFakeData();
   }
 
   @UseGuards(AuthGuard)
