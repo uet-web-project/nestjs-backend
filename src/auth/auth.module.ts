@@ -4,17 +4,22 @@ import { RegistrationDepModule } from '../registration-dep/registration-dep.modu
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { JwtModule } from '@nestjs/jwt';
-
-console.log(process.env.JWT_SECRET);
+import { ConfigModule, ConfigService } from '@nestjs/config';
 
 @Module({
   imports: [
     RegistrationCenterModule,
     RegistrationDepModule,
-    JwtModule.register({
+    JwtModule.registerAsync({
+      inject: [ConfigService],
+      imports: [ConfigModule],
       global: true,
-      secret: process.env.JWT_SECRET || 'supersecrettoken',
-      signOptions: { expiresIn: '1 day' },
+      useFactory: async (configService: ConfigService) => {
+        return {
+          secret: configService.get<string>('JWT_SECRET'),
+          signOptions: { expiresIn: '1 day' },
+        };
+      },
     }),
   ],
   controllers: [AuthController],
