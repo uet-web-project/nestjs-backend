@@ -8,6 +8,9 @@ export type VehicleDocument = HydratedDocument<Vehicle>;
 @Schema()
 export class Vehicle {
   @Prop({ required: true, unique: true })
+  vin: string;
+
+  @Prop({ required: true, unique: true })
   registrationNumber: string;
 
   @Prop({ required: true })
@@ -49,19 +52,13 @@ export class Vehicle {
   width: number;
 
   @Prop({ required: true })
-  height: number;
+  length: number;
 
   @Prop({ required: true })
-  groundClearance: number;
+  emission: number;
 
   @Prop({ required: true })
-  cylinderCapacity: number;
-
-  @Prop({ required: true })
-  torque: number;
-
-  @Prop({ required: true })
-  gearbox: string;
+  mileage: number;
 
   @Prop({
     required: true,

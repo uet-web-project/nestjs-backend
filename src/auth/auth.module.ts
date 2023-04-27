@@ -4,7 +4,8 @@ import { RegistrationDepModule } from '../registration-dep/registration-dep.modu
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { JwtModule } from '@nestjs/jwt';
-import { jwtConstants } from './constants';
+
+console.log(process.env.JWT_SECRET);
 
 @Module({
   imports: [
@@ -12,7 +13,7 @@ import { jwtConstants } from './constants';
     RegistrationDepModule,
     JwtModule.register({
       global: true,
-      secret: process.env.JWT_SECRET || jwtConstants.secret,
+      secret: process.env.JWT_SECRET || 'supersecrettoken',
       signOptions: { expiresIn: '1 day' },
     }),
   ],

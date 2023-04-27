@@ -15,5 +15,6 @@ import {
   ],
   providers: [VehicleOwnerService],
   controllers: [VehicleOwnerController],
+  exports: [VehicleOwnerService],
 })
 export class VehicleOwnerModule {}

@@ -46,4 +46,9 @@ export class VehicleOwnerController {
       res.status(404).json('Error deleting owner');
     }
   }
+
+  @Get('get-fake-data')
+  async genFakeData(): Promise<void> {
+    await this.vehicleOwnerService.genFakeData();
+  }
 }

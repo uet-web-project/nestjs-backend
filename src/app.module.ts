@@ -7,9 +7,14 @@ import { RegistrationDepModule } from './registration-dep/registration-dep.modul
 import { VehicleModule } from './vehicle/vehicle.module';
 import { VehicleOwnerModule } from './vehicle-owner/vehicle-owner.module';
 import { AuthModule } from './auth/auth.module';
+import { ConfigModule } from '@nestjs/config';
 
 @Module({
   imports: [
+    ConfigModule.forRoot({
+      envFilePath: '.env',
+      isGlobal: true,
+    }),
     MongooseModule.forRoot(
       'mongodb+srv://votindu26062003:tindu2003@cluster0.dnlr7.mongodb.net/?retryWrites=true&w=majority',
     ),
