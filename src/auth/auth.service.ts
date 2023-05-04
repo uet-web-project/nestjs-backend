@@ -16,8 +16,13 @@ export class AuthService {
 
   async regDepLogin(depName: string, pass: string): Promise<any> {
     const dep: any = await this.registrationDepService.findByDepName(depName);
-    if (dep?.password !== pass) {
-      throw new UnauthorizedException();
+
+    if (dep) {
+      if (dep.password !== pass) {
+        throw new UnauthorizedException('Wrong password');
+      }
+    } else {
+      throw new UnauthorizedException('Department does not exist');
     }
 
     const payload = {
@@ -34,8 +39,13 @@ export class AuthService {
     const center: any = await this.registrationCenterService.findByCenterId(
       centerId,
     );
-    if (center?.password !== pass) {
-      throw new UnauthorizedException();
+
+    if (center) {
+      if (center?.password !== pass) {
+        throw new UnauthorizedException('Wrong password');
+      }
+    } else {
+      throw new UnauthorizedException('Center does not exist');
     }
 
     const payload = {

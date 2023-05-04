@@ -15,7 +15,7 @@ export class AuthController {
         .status(200)
         .json(await this.authService.regDepLogin(data.name, data.password));
     } catch (error) {
-      res.status(404).json(error);
+      res.status(error.status).json(error);
     }
   }
 
@@ -31,7 +31,7 @@ export class AuthController {
           await this.authService.regCenterLogin(data.centerId, data.password),
         );
     } catch (error) {
-      res.status(404).json(error);
+      res.status(error.status).json(error);
     }
   }
 
@@ -40,7 +40,7 @@ export class AuthController {
     try {
       res.status(200).json(await this.authService.checkToken(token));
     } catch (error) {
-      res.status(404).json(error);
+      res.status(error.status || 404).json(error);
     }
   }
 }
