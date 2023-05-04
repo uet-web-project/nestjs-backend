@@ -47,20 +47,6 @@ export class RegistrationDepController {
     }
   }
 
-  @UseGuards(AuthGuard)
-  @Post('login')
-  async login(@Body() data: IRegistrationDep, @Res() res): Promise<void> {
-    try {
-      const response = await this.registrationDepService.login(data);
-      if (typeof response === 'string') {
-        res.status(404).json(response);
-      }
-      res.status(200).json(response);
-    } catch (error) {
-      res.status(404).json(error);
-    }
-  }
-
   @Delete('delete-all-fake-data')
   async deleteAllFakeData(): Promise<void> {
     await this.registrationDepService.deleteAllFakeData();

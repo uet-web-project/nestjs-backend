@@ -11,7 +11,6 @@ export class AuthController {
     @Res() res,
   ): Promise<void> {
     try {
-      console.log(process.env.JWT_SECRET);
       res
         .status(200)
         .json(await this.authService.regDepLogin(data.name, data.password));

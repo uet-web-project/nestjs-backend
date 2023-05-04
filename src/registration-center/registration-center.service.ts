@@ -34,21 +34,6 @@ export class RegistrationCenterService {
     return createdCenter.save();
   }
 
-  async login(registrationCenter: IRegistrationCenter): Promise<any> {
-    const res = await this.registrationCenterModel
-      .findOne({
-        centerId: registrationCenter.centerId,
-      })
-      .exec();
-    if (res) {
-      if (res.password === registrationCenter.password) {
-        return res;
-      }
-      return 'Wrong Password';
-    }
-    return 'Center ID does not exist';
-  }
-
   async deleteById(id: string): Promise<void> {
     await this.registrationCenterModel.findByIdAndDelete(id).catch((error) => {
       throw error;

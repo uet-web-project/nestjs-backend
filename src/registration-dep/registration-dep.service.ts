@@ -30,20 +30,6 @@ export class RegistrationDepService {
     return createdDep.save();
   }
 
-  async login(registrationDep: IRegistrationDep): Promise<any> {
-    const res = await this.registrationDepModel.findOne({
-      name: registrationDep.name,
-    });
-
-    if (res) {
-      if (res.password === registrationDep.password) {
-        return res;
-      }
-      return 'Wrong Password';
-    }
-    return 'Department does not exist';
-  }
-
   async deleteById(id: string): Promise<void> {
     await this.registrationDepModel.findByIdAndDelete(id).catch((error) => {
       throw error;

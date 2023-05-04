@@ -3,6 +3,9 @@ import { RegistrationCenterService } from '../registration-center/registration-c
 import { RegistrationDepService } from '../registration-dep/registration-dep.service';
 import { JwtService } from '@nestjs/jwt';
 
+// TODO: add hash password before saving to db
+// TODO: de-hash and compare password when login
+
 @Injectable()
 export class AuthService {
   constructor(
