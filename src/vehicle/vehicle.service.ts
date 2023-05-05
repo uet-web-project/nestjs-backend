@@ -88,10 +88,14 @@ export class VehicleService {
         purpose: purposes[randomVehicleTypeIndex],
         manufacturer: faker.vehicle.manufacturer(),
         model: faker.vehicle.model(),
-        version: '2022',
+        version: faker.date
+          .between('2010-01-01', '2022-01-01')
+          .getFullYear()
+          .toString(),
         licensePlate: `30E-${faker.random.numeric(5)}`,
         width: faker.datatype.number({ min: 1800, max: 2200 }),
         length: faker.datatype.number({ min: 4500, max: 6000 }),
+        wheelBase: faker.datatype.number({ min: 2200, max: 3000 }),
         emission: faker.datatype.number({ min: 4, max: 7 }),
         mileage: faker.datatype.number({ min: 100, max: 100000 }),
         vehicleOwner: ownersIds[randomOwnerIndex],

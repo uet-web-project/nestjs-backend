@@ -55,6 +55,9 @@ export class Vehicle {
   length: number;
 
   @Prop({ required: true })
+  wheelBase: number;
+
+  @Prop({ required: true })
   emission: number;
 
   @Prop({ required: true })

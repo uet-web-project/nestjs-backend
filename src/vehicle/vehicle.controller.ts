@@ -77,4 +77,9 @@ export class VehicleController {
       res.status(404).json(error);
     }
   }
+
+  @Get('gen-fake-data')
+  async genFakeData(): Promise<void> {
+    await this.vehicleService.genFakeData();
+  }
 }
