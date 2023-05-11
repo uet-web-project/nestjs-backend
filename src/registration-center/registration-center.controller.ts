@@ -17,7 +17,7 @@ import { RegistrationCenter } from '../schemas/registration-center.schema';
 export class RegistrationCenterController {
   constructor(private registrationCenterService: RegistrationCenterService) {}
 
-  @Get('get-fake-data')
+  @Get('gen-fake-data')
   async genFakeData(): Promise<void> {
     await this.registrationCenterService.genFakeData();
   }

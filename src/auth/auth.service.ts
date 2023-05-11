@@ -2,9 +2,7 @@ import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { RegistrationCenterService } from '../registration-center/registration-center.service';
 import { RegistrationDepService } from '../registration-dep/registration-dep.service';
 import { JwtService } from '@nestjs/jwt';
-
-// TODO: add hash password before saving to db
-// TODO: de-hash and compare password when login
+import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class AuthService {
@@ -18,7 +16,9 @@ export class AuthService {
     const dep: any = await this.registrationDepService.findByDepId(depId);
 
     if (dep) {
-      if (dep.password !== pass) {
+      const hashedPass = dep.password;
+      const isMatch = await bcrypt.compare(pass, hashedPass);
+      if (!isMatch) {
         throw new UnauthorizedException('Wrong password');
       }
     } else {
@@ -42,7 +42,9 @@ export class AuthService {
     );
 
     if (center) {
-      if (center?.password !== pass) {
+      const hashedPass = center.password;
+      const isMatch = await bcrypt.compare(pass, hashedPass);
+      if (!isMatch) {
         throw new UnauthorizedException('Wrong password');
       }
     } else {

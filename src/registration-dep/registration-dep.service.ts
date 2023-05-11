@@ -9,6 +9,7 @@ import { IRegistrationDep } from '../interfaces/registrationDep.interface';
 
 import { faker } from '@faker-js/faker';
 import { ObjectId } from 'bson';
+import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class RegistrationDepService {
@@ -30,6 +31,10 @@ export class RegistrationDepService {
   }
 
   async create(registrationDep: IRegistrationDep): Promise<RegistrationDep> {
+    registrationDep = {
+      ...registrationDep,
+      password: await bcrypt.hash(registrationDep.password, 10),
+    };
     const createdDep = new this.registrationDepModel(registrationDep);
     return createdDep.save();
   }
@@ -47,7 +52,7 @@ export class RegistrationDepService {
         _id: new ObjectId().toString(),
         depId: faker.datatype.number({ min: 100000, max: 999999 }).toString(),
         name: faker.company.name(),
-        password: faker.internet.password(8, true),
+        password: await bcrypt.hash(faker.internet.password(8, true), 10),
       });
     }
     await this.registrationDepModel.insertMany(fakeData);

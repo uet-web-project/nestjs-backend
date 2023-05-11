@@ -7,9 +7,9 @@ import {
 } from 'src/schemas/registration-center.schema';
 import { IRegistrationCenter } from '../interfaces/registrationCenter.interface';
 import { RegistrationDepService } from '../registration-dep/registration-dep.service';
-
 import { faker } from '@faker-js/faker';
 import { ObjectId } from 'bson';
+import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class RegistrationCenterService {
@@ -30,6 +30,10 @@ export class RegistrationCenterService {
   async create(
     registrationCenter: IRegistrationCenter,
   ): Promise<RegistrationCenter> {
+    registrationCenter = {
+      ...registrationCenter,
+      password: await bcrypt.hash(registrationCenter.password, 10),
+    };
     const createdCenter = new this.registrationCenterModel(registrationCenter);
     return createdCenter.save();
   }
@@ -55,7 +59,7 @@ export class RegistrationCenterService {
         centerId: faker.datatype
           .number({ min: 100000, max: 999999 })
           .toString(),
-        password: faker.internet.password(8, true),
+        password: await bcrypt.hash(faker.internet.password(8, true), 10),
         name: faker.company.catchPhrase(),
         location: faker.address.city(),
         phoneNumber: faker.phone.number('09########'),
