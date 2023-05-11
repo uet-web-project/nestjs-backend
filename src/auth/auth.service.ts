@@ -14,8 +14,8 @@ export class AuthService {
     private jwtService: JwtService,
   ) {}
 
-  async regDepLogin(depName: string, pass: string): Promise<any> {
-    const dep: any = await this.registrationDepService.findByDepName(depName);
+  async regDepLogin(depId: string, pass: string): Promise<any> {
+    const dep: any = await this.registrationDepService.findByDepId(depId);
 
     if (dep) {
       if (dep.password !== pass) {
@@ -27,6 +27,7 @@ export class AuthService {
 
     const payload = {
       _id: dep?._id,
+      depId: dep?.depId,
       name: dep?.name,
     };
 

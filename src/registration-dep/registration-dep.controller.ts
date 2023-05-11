@@ -17,7 +17,7 @@ import { AuthGuard } from '../auth/auth.guard';
 export class RegistrationDepController {
   constructor(private registrationDepService: RegistrationDepService) {}
 
-  @Get('get-fake-data')
+  @Get('gen-fake-data')
   async genFakeData(): Promise<void> {
     await this.registrationDepService.genFakeData();
   }

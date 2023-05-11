@@ -9,7 +9,9 @@ describe('RegistrationCenterController', () => {
       controllers: [RegistrationCenterController],
     }).compile();
 
-    controller = module.get<RegistrationCenterController>(RegistrationCenterController);
+    controller = module.get<RegistrationCenterController>(
+      RegistrationCenterController,
+    );
   });
 
   it('should be defined', () => {

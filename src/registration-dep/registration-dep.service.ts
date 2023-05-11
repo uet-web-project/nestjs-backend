@@ -21,6 +21,10 @@ export class RegistrationDepService {
     return this.registrationDepModel.find().exec();
   }
 
+  async findByDepId(depId: string): Promise<RegistrationDep> {
+    return this.registrationDepModel.findOne({ depId: depId }).exec();
+  }
+
   async findByDepName(depName: string): Promise<RegistrationDep> {
     return this.registrationDepModel.findOne({ name: depName }).exec();
   }
@@ -41,6 +45,7 @@ export class RegistrationDepService {
     for (let i = 0; i < 25; i++) {
       fakeData.push({
         _id: new ObjectId().toString(),
+        depId: faker.datatype.number({ min: 100000, max: 999999 }).toString(),
         name: faker.company.name(),
         password: faker.internet.password(8, true),
       });

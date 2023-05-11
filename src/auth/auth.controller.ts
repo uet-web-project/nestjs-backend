@@ -7,13 +7,13 @@ export class AuthController {
 
   @Post('registration-dep')
   async regDepLogin(
-    @Body() data: { name: string; password: string },
+    @Body() data: { depId: string; password: string },
     @Res() res,
   ): Promise<void> {
     try {
       res
         .status(200)
-        .json(await this.authService.regDepLogin(data.name, data.password));
+        .json(await this.authService.regDepLogin(data.depId, data.password));
     } catch (error) {
       res.status(error.status).json(error);
     }

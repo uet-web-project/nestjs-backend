@@ -6,6 +6,9 @@ export type RegistrationDepDocument = HydratedDocument<RegistrationDep>;
 @Schema()
 export class RegistrationDep {
   @Prop({ required: true })
+  depId: string;
+
+  @Prop({ required: true })
   name: string;
 
   @Prop({ required: true })
