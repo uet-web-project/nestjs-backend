@@ -13,6 +13,7 @@ import { RegistrationDepService } from './registration-dep.service';
 import { IRegistrationDep } from '../interfaces/registrationDep.interface';
 import { AuthGuard } from '../auth/auth.guard';
 
+@UseGuards(AuthGuard)
 @Controller('registration-dep')
 export class RegistrationDepController {
   constructor(private registrationDepService: RegistrationDepService) {}
@@ -31,13 +32,11 @@ export class RegistrationDepController {
     }
   }
 
-  @UseGuards(AuthGuard)
   @Get('profile')
   async getProfile(@Req() req): Promise<IRegistrationDep> {
     return req.data;
   }
 
-  @UseGuards(AuthGuard)
   @Post()
   async create(@Body() data: IRegistrationDep, @Res() res): Promise<void> {
     try {
@@ -52,7 +51,6 @@ export class RegistrationDepController {
     await this.registrationDepService.deleteAllFakeData();
   }
 
-  @UseGuards(AuthGuard)
   @Delete(':id')
   async deleteById(@Param('id') id, @Res() res): Promise<void> {
     try {

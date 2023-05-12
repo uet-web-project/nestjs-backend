@@ -42,7 +42,7 @@ export class VehicleOwnerService {
         cid: faker.random.numeric(12).toString(),
       });
     }
-    console.log(fakeData);
-    // await this.vehicleOwnerModel.insertMany(fakeData);
+    // console.log(fakeData);
+    await this.vehicleOwnerModel.insertMany(fakeData);
   }
 }

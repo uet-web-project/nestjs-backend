@@ -102,7 +102,7 @@ export class VehicleService {
         registrationCenter: registrationCentersIds[randomCenterIndex],
       });
     }
-    console.log(fakeData);
-    // await this.vehicleModel.insertMany(fakeData);
+    // console.log(fakeData);
+    await this.vehicleModel.insertMany(fakeData);
   }
 }

@@ -13,6 +13,7 @@ import { RegistrationCenterService } from './registration-center.service';
 import { AuthGuard } from '../auth/auth.guard';
 import { RegistrationCenter } from '../schemas/registration-center.schema';
 
+@UseGuards(AuthGuard)
 @Controller('registration-center')
 export class RegistrationCenterController {
   constructor(private registrationCenterService: RegistrationCenterService) {}
@@ -31,13 +32,11 @@ export class RegistrationCenterController {
     }
   }
 
-  @UseGuards(AuthGuard)
   @Get('profile')
   async getProfile(@Req() req): Promise<RegistrationCenter> {
     return req.data;
   }
 
-  @UseGuards(AuthGuard)
   @Post()
   async create(@Body() body, @Res() res): Promise<void> {
     try {
@@ -52,7 +51,6 @@ export class RegistrationCenterController {
     await this.registrationCenterService.deleteAllFakeData();
   }
 
-  @UseGuards(AuthGuard)
   @Delete(':id')
   async deleteById(@Param('id') id, @Res() res): Promise<void> {
     try {

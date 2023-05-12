@@ -11,6 +11,7 @@ import {
 import { VehicleService } from './vehicle.service';
 import { AuthGuard } from '../auth/auth.guard';
 
+@UseGuards(AuthGuard)
 @Controller('vehicle')
 export class VehicleController {
   constructor(private vehicleService: VehicleService) {}
@@ -50,7 +51,6 @@ export class VehicleController {
     }
   }
 
-  @UseGuards(AuthGuard)
   @Post()
   async create(@Body() body, @Res() res): Promise<void> {
     try {
@@ -60,14 +60,12 @@ export class VehicleController {
     }
   }
 
-  @UseGuards(AuthGuard)
   @Post('many')
   async createMany(@Body() body, @Res() res): Promise<void> {
     await this.vehicleService.createMany(body);
     res.status(200).json('Success');
   }
 
-  @UseGuards(AuthGuard)
   @Delete(':id')
   async deleteById(@Param('id') id, @Res() res): Promise<void> {
     try {
