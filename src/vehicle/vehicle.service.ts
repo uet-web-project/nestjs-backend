@@ -7,6 +7,7 @@ import { VehicleOwnerService } from '../vehicle-owner/vehicle-owner.service';
 import { IVehicle } from '../interfaces/vehicle.interface';
 import { ObjectId } from 'bson';
 import { faker } from '@faker-js/faker';
+import { Flags } from 'src/constants/Flags';
 
 @Injectable()
 export class VehicleService {
@@ -37,6 +38,64 @@ export class VehicleService {
 
   async findByVehicleType(vehicleType: string): Promise<Vehicle[]> {
     return this.vehicleModel.find({ vehicleType: vehicleType }).exec();
+  }
+
+  async groupByVehicleType(filter: string): Promise<any> {
+    let matchFilter = {};
+    if (filter === Flags.FILTER_BY_MONTH) {
+      matchFilter = {
+        $and: [
+          {
+            $expr: {
+              $eq: [
+                {
+                  $year: {
+                    $dateFromString: { dateString: '$registrationDate' },
+                  },
+                },
+                new Date().getFullYear(),
+              ],
+            },
+          },
+          {
+            $expr: {
+              $eq: [
+                {
+                  $month: {
+                    $dateFromString: { dateString: '$registrationDate' },
+                  },
+                },
+                new Date().getMonth(),
+              ],
+            },
+          },
+        ],
+      };
+    } else if (filter === Flags.FILTER_BY_YEAR) {
+      matchFilter = {
+        $expr: {
+          $eq: [
+            { $year: { $dateFromString: { dateString: '$registrationDate' } } },
+            new Date().getFullYear(),
+          ],
+        },
+      };
+    }
+
+    return this.vehicleModel
+      .aggregate([
+        {
+          $match: matchFilter,
+        },
+        {
+          $group: {
+            _id: '$vehicleType',
+            count: { $sum: 1 }, // sum of each group,
+            vehicles: { $push: { registrationDate: '$registrationDate' } },
+          },
+        },
+      ])
+      .exec();
   }
 
   async create(vehicle: IVehicle): Promise<Vehicle> {

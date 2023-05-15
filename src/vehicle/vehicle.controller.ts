@@ -33,7 +33,7 @@ export class VehicleController {
         .status(200)
         .json(await this.vehicleService.findByRegistrationCenter(id));
     } catch (error) {
-      res.status(404).json(error);
+      res.status(error.status || 404).json(error);
     }
   }
 
@@ -47,7 +47,18 @@ export class VehicleController {
         .status(200)
         .json(await this.vehicleService.findByVehicleType(vehicleType));
     } catch (error) {
-      res.status(404).json(error);
+      res.status(error.status || 404).json(error);
+    }
+  }
+
+  @Get('group-by-vehicle-type/:filter')
+  async groupByVehicleType(@Param('filter') filter, @Res() res): Promise<void> {
+    try {
+      res
+        .status(200)
+        .json(await this.vehicleService.groupByVehicleType(filter));
+    } catch (error) {
+      res.status(error.status || 404).json(error);
     }
   }
 
@@ -72,7 +83,7 @@ export class VehicleController {
       await this.vehicleService.deleteById(id);
       res.status(200).json('Vehicle deleted');
     } catch (error) {
-      res.status(404).json(error);
+      res.status(error.status || 404).json(error);
     }
   }
 
