@@ -27,6 +27,10 @@ export class RegistrationCenterService {
     return this.registrationCenterModel.findOne({ centerId: centerId }).exec();
   }
 
+  async findByDepId(depId: string): Promise<RegistrationCenter[]> {
+    return this.registrationCenterModel.find({ registrationDep: depId }).exec();
+  }
+
   async create(
     registrationCenter: IRegistrationCenter,
   ): Promise<RegistrationCenter> {
