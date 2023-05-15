@@ -32,7 +32,7 @@ export class RegistrationCenterController {
     }
   }
 
-  @Get(':depId')
+  @Get('get-by-dep-id/:depId')
   async findByDepId(@Param('depId') depId, @Res() res): Promise<void> {
     try {
       res
