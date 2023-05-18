@@ -74,23 +74,23 @@ export class VehicleService {
       res.week1 = vehiclesRegisteredWithinFilter.filter((vehicle) => {
         const date = new Date(vehicle.registrationDate);
         return date.getDate() <= 7;
-      }).length;
+      });
       res.week2 = vehiclesRegisteredWithinFilter.filter((vehicle) => {
         const date = new Date(vehicle.registrationDate);
         return date.getDate() > 7 && date.getDate() <= 14;
-      }).length;
+      });
       res.week3 = vehiclesRegisteredWithinFilter.filter((vehicle) => {
         const date = new Date(vehicle.registrationDate);
         return date.getDate() > 14 && date.getDate() <= 21;
-      }).length;
+      });
       res.week4 = vehiclesRegisteredWithinFilter.filter((vehicle) => {
         const date = new Date(vehicle.registrationDate);
         return date.getDate() > 21 && date.getDate() <= 38;
-      }).length;
+      });
       res.remainingDays = vehiclesRegisteredWithinFilter.filter((vehicle) => {
         const date = new Date(vehicle.registrationDate);
         return date.getDate() > 28;
-      }).length;
+      });
     } else if (filter === Flags.FILTER_BY_YEAR) {
       res = {
         january: [],
@@ -268,7 +268,7 @@ function getFindFilterByDate(filter: string) {
                   $dateFromString: { dateString: '$registrationDate' },
                 },
               },
-              new Date().getMonth(),
+              new Date().getMonth() + 1,
             ],
           },
         },
@@ -344,7 +344,7 @@ function getAggregationMatchFilterByDate(filter: string) {
                   $dateFromString: { dateString: '$registrationDate' },
                 },
               },
-              new Date().getMonth(),
+              new Date().getMonth() + 1,
             ],
           },
         },
