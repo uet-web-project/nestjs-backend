@@ -46,19 +46,74 @@ export class VehicleService {
     const vehiclesRegisteredWithinFilter: Vehicle[] = await this.vehicleModel
       .find(findFilter)
       .exec();
-    let res = {};
+    let res: any;
     if (filter === Flags.FILTER_BY_WEEK) {
       res = {
+        sunday: [],
         monday: [],
         tuesday: [],
         wednesday: [],
         thursday: [],
         friday: [],
         saturday: [],
-        sunday: [],
       };
+      Object.keys(res).map((key, index) => {
+        res[key] = vehiclesRegisteredWithinFilter.filter((vehicle) => {
+          const date = new Date(vehicle.registrationDate);
+          return date.getDay() === index;
+        }).length;
+      });
+    } else if (filter === Flags.FILTER_BY_MONTH) {
+      res = {
+        week1: [],
+        week2: [],
+        week3: [],
+        week4: [],
+        remainingDays: [],
+      };
+      res.week1 = vehiclesRegisteredWithinFilter.filter((vehicle) => {
+        const date = new Date(vehicle.registrationDate);
+        return date.getDate() <= 7;
+      }).length;
+      res.week2 = vehiclesRegisteredWithinFilter.filter((vehicle) => {
+        const date = new Date(vehicle.registrationDate);
+        return date.getDate() > 7 && date.getDate() <= 14;
+      }).length;
+      res.week3 = vehiclesRegisteredWithinFilter.filter((vehicle) => {
+        const date = new Date(vehicle.registrationDate);
+        return date.getDate() > 14 && date.getDate() <= 21;
+      }).length;
+      res.week4 = vehiclesRegisteredWithinFilter.filter((vehicle) => {
+        const date = new Date(vehicle.registrationDate);
+        return date.getDate() > 21 && date.getDate() <= 38;
+      }).length;
+      res.remainingDays = vehiclesRegisteredWithinFilter.filter((vehicle) => {
+        const date = new Date(vehicle.registrationDate);
+        return date.getDate() > 28;
+      }).length;
+    } else if (filter === Flags.FILTER_BY_YEAR) {
+      res = {
+        january: [],
+        february: [],
+        march: [],
+        april: [],
+        may: [],
+        june: [],
+        july: [],
+        august: [],
+        september: [],
+        october: [],
+        november: [],
+        december: [],
+      };
+      Object.keys(res).map((key, index) => {
+        res[key] = vehiclesRegisteredWithinFilter.filter((vehicle) => {
+          const date = new Date(vehicle.registrationDate);
+          return date.getMonth() === index;
+        }).length;
+      });
     }
-    console.log(vehiclesRegisteredWithinFilter);
+    return res;
   }
 
   /**Group vehicle by their type and filters by current week, month or year */
@@ -172,7 +227,7 @@ function getFindFilterByDate(filter: string) {
                   $dateFromString: { dateString: '$registrationDate' },
                 },
               },
-              getCurrentWeekOfYear(),
+              getCurrentWeekOfYear() + 1,
             ],
           },
         },
@@ -246,7 +301,7 @@ function getAggregationMatchFilterByDate(filter: string) {
                   $dateFromString: { dateString: '$registrationDate' },
                 },
               },
-              getCurrentWeekOfYear(),
+              getCurrentWeekOfYear() + 1,
             ],
           },
         },
