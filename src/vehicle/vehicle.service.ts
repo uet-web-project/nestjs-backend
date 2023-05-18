@@ -73,16 +73,16 @@ export class VehicleService {
         {
           $group: {
             _id: '$vehicleType',
-            count: { $sum: 1 }, // sum of each group,
-            vehicles: { $push: { registrationDate: '$registrationDate' } },
+            vehicles: { $sum: 1 }, // sum of each group,
+            vehicleInfos: { $push: { registrationDate: '$registrationDate' } },
           },
         },
         {
           $project: {
             _id: 0,
             vehicleType: '$_id',
-            count: 1,
             vehicles: 1,
+            vehicleInfos: 1,
           },
         },
       ])
