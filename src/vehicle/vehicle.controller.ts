@@ -51,6 +51,18 @@ export class VehicleController {
     }
   }
 
+  @Get('get-registered-vehicles-count/:filter')
+  async getRegisteredVehiclesCount(@Param('filter') filter, @Res() res) {
+    try {
+      res
+        .status(200)
+        .json(await this.vehicleService.getRegisteredVehiclesCount(filter));
+    } catch (error) {
+      console.log(error);
+      res.status(error.status || 404).json(error);
+    }
+  }
+
   @Get('group-by-vehicle-type/:filter')
   async groupByVehicleType(@Param('filter') filter, @Res() res): Promise<void> {
     try {

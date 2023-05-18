@@ -8,6 +8,7 @@ import { IVehicle } from '../interfaces/vehicle.interface';
 import { ObjectId } from 'bson';
 import { faker } from '@faker-js/faker';
 import { Flags } from 'src/constants/Flags';
+import getCurrentWeekOfYear from 'src/utils/getCurrentWeekOfTheYear';
 
 @Injectable()
 export class VehicleService {
@@ -40,47 +41,29 @@ export class VehicleService {
     return this.vehicleModel.find({ vehicleType: vehicleType }).exec();
   }
 
-  async groupByVehicleType(filter: string): Promise<any> {
-    let matchFilter = {};
-    if (filter === Flags.FILTER_BY_MONTH) {
-      matchFilter = {
-        $and: [
-          {
-            $expr: {
-              $eq: [
-                {
-                  $year: {
-                    $dateFromString: { dateString: '$registrationDate' },
-                  },
-                },
-                new Date().getFullYear(),
-              ],
-            },
-          },
-          {
-            $expr: {
-              $eq: [
-                {
-                  $month: {
-                    $dateFromString: { dateString: '$registrationDate' },
-                  },
-                },
-                new Date().getMonth(),
-              ],
-            },
-          },
-        ],
-      };
-    } else if (filter === Flags.FILTER_BY_YEAR) {
-      matchFilter = {
-        $expr: {
-          $eq: [
-            { $year: { $dateFromString: { dateString: '$registrationDate' } } },
-            new Date().getFullYear(),
-          ],
-        },
+  async getRegisteredVehiclesCount(filter: string): Promise<any> {
+    const findFilter = getFindFilterByDate(filter);
+    const vehiclesRegisteredWithinFilter: Vehicle[] = await this.vehicleModel
+      .find(findFilter)
+      .exec();
+    let res = {};
+    if (filter === Flags.FILTER_BY_WEEK) {
+      res = {
+        monday: [],
+        tuesday: [],
+        wednesday: [],
+        thursday: [],
+        friday: [],
+        saturday: [],
+        sunday: [],
       };
     }
+    console.log(vehiclesRegisteredWithinFilter);
+  }
+
+  /**Group vehicle by their type and filters by current week, month or year */
+  async groupByVehicleType(filter: string): Promise<any> {
+    const matchFilter = getAggregationMatchFilterByDate(filter);
 
     return this.vehicleModel
       .aggregate([
@@ -92,6 +75,14 @@ export class VehicleService {
             _id: '$vehicleType',
             count: { $sum: 1 }, // sum of each group,
             vehicles: { $push: { registrationDate: '$registrationDate' } },
+          },
+        },
+        {
+          $project: {
+            _id: 0,
+            vehicleType: '$_id',
+            count: 1,
+            vehicles: 1,
           },
         },
       ])
@@ -112,6 +103,7 @@ export class VehicleService {
     await this.vehicleModel.findByIdAndDelete(id).exec();
   }
 
+  /**Genarates a bunch of fake data using faker.js */
   async genFakeData(): Promise<void> {
     const vehicleTypes = ['car', 'truck', 'bus'];
     const purposes = [
@@ -164,4 +156,155 @@ export class VehicleService {
     // console.log(fakeData);
     await this.vehicleModel.insertMany(fakeData);
   }
+}
+
+/**Get the find filter by date */
+function getFindFilterByDate(filter: string) {
+  let findFilter = {};
+  if (filter === Flags.FILTER_BY_WEEK) {
+    findFilter = {
+      $and: [
+        {
+          $expr: {
+            $eq: [
+              {
+                $week: {
+                  $dateFromString: { dateString: '$registrationDate' },
+                },
+              },
+              getCurrentWeekOfYear(),
+            ],
+          },
+        },
+        {
+          $expr: {
+            $eq: [
+              {
+                $year: {
+                  $dateFromString: { dateString: '$registrationDate' },
+                },
+              },
+              new Date().getFullYear(),
+            ],
+          },
+        },
+      ],
+    };
+  } else if (filter === Flags.FILTER_BY_MONTH) {
+    findFilter = {
+      $and: [
+        {
+          $expr: {
+            $eq: [
+              {
+                $year: {
+                  $dateFromString: { dateString: '$registrationDate' },
+                },
+              },
+              new Date().getFullYear(),
+            ],
+          },
+        },
+        {
+          $expr: {
+            $eq: [
+              {
+                $month: {
+                  $dateFromString: { dateString: '$registrationDate' },
+                },
+              },
+              new Date().getMonth(),
+            ],
+          },
+        },
+      ],
+    };
+  } else if (filter === Flags.FILTER_BY_YEAR) {
+    findFilter = {
+      $expr: {
+        $eq: [
+          { $year: { $dateFromString: { dateString: '$registrationDate' } } },
+          new Date().getFullYear(),
+        ],
+      },
+    };
+  }
+  return findFilter;
+}
+
+/**Get aggregation match filter based on the input filter by date */
+function getAggregationMatchFilterByDate(filter: string) {
+  let matchFilter = {};
+  if (filter === Flags.FILTER_BY_WEEK) {
+    matchFilter = {
+      $and: [
+        {
+          $expr: {
+            $eq: [
+              {
+                $week: {
+                  $dateFromString: { dateString: '$registrationDate' },
+                },
+              },
+              getCurrentWeekOfYear(),
+            ],
+          },
+        },
+        {
+          $expr: {
+            $eq: [
+              {
+                $year: {
+                  $dateFromString: { dateString: '$registrationDate' },
+                },
+              },
+              new Date().getFullYear(),
+            ],
+          },
+        },
+      ],
+    };
+  }
+  // filter by month by filtering the year and month of registrationDate to be the same as the current year and month
+  else if (filter === Flags.FILTER_BY_MONTH) {
+    matchFilter = {
+      $and: [
+        {
+          $expr: {
+            $eq: [
+              {
+                $year: {
+                  $dateFromString: { dateString: '$registrationDate' },
+                },
+              },
+              new Date().getFullYear(),
+            ],
+          },
+        },
+        {
+          $expr: {
+            $eq: [
+              {
+                $month: {
+                  $dateFromString: { dateString: '$registrationDate' },
+                },
+              },
+              new Date().getMonth(),
+            ],
+          },
+        },
+      ],
+    };
+    // filter by year by filtering the year of registrationDate to be the same as the current year
+  } else if (filter === Flags.FILTER_BY_YEAR) {
+    matchFilter = {
+      $expr: {
+        $eq: [
+          { $year: { $dateFromString: { dateString: '$registrationDate' } } },
+          new Date().getFullYear(),
+        ],
+      },
+    };
+  }
+  return matchFilter;
 }
