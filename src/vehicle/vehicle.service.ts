@@ -71,7 +71,7 @@ export class VehicleService {
         { date: 'Week 2', vehicles: 0 },
         { date: 'Week 3', vehicles: 0 },
         { date: 'Week 4', vehicles: 0 },
-        { date: 'Remaining days', vehicles: 0 },
+        { date: 'Other', vehicles: 0 },
       ];
       res[0].vehicles = vehiclesRegisteredWithinFilter.filter((vehicle) => {
         const date = new Date(vehicle.registrationDate);
