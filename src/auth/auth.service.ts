@@ -66,7 +66,7 @@ export class AuthService {
   }
 
   async checkToken(token: string): Promise<any> {
-    console.log(process.env.JWT_SECRET);
+    // console.log(process.env.JWT_SECRET);
 
     return await this.jwtService.verifyAsync(token, {
       secret: process.env.JWT_SECRET,

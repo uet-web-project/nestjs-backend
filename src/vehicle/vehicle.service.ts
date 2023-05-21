@@ -67,8 +67,6 @@ export class VehicleService {
       filter = Flags.FILTER_BY_MANY_YEARS;
     }
 
-    console.log(filter);
-
     let res: any;
     if (filter === Flags.FILTER_BY_WEEK) {
       res = [
