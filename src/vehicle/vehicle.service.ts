@@ -57,14 +57,19 @@ export class VehicleService {
       .find(findFilter)
       .exec();
 
-    if (new Date(startDate).getFullYear() === new Date(endDate).getFullYear()) {
-      if (new Date(startDate).getMonth() === new Date(endDate).getMonth()) {
-        filter = Flags.FILTER_BY_MONTH;
+    // automatically group data based on start date and end date
+    if (startDate && endDate) {
+      if (
+        new Date(startDate).getFullYear() === new Date(endDate).getFullYear()
+      ) {
+        if (new Date(startDate).getMonth() === new Date(endDate).getMonth()) {
+          filter = Flags.FILTER_BY_MONTH;
+        } else {
+          filter = Flags.FILTER_BY_YEAR;
+        }
       } else {
-        filter = Flags.FILTER_BY_YEAR;
+        filter = Flags.FILTER_BY_MANY_YEARS;
       }
-    } else {
-      filter = Flags.FILTER_BY_MANY_YEARS;
     }
 
     let res: any;
