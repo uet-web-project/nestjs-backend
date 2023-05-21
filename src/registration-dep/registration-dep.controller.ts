@@ -42,7 +42,7 @@ export class RegistrationDepController {
     try {
       res.status(200).json(await this.registrationDepService.create(data));
     } catch (error) {
-      res.status(404).json(error);
+      res.status(error.status || 404).json(error);
     }
   }
 

@@ -1,5 +1,5 @@
 import { Model } from 'mongoose';
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotAcceptableException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import {
   RegistrationCenter,
@@ -34,9 +34,18 @@ export class RegistrationCenterService {
   async create(
     registrationCenter: IRegistrationCenter,
   ): Promise<RegistrationCenter> {
+    const centerIds = (await this.registrationCenterModel.find().exec()).map(
+      (center) => center.centerId.toString(),
+    );
+
+    if (centerIds.includes(registrationCenter.centerId)) {
+      throw new NotAcceptableException('Center ID already exists');
+    }
+
+    const salt = await bcrypt.genSalt();
     registrationCenter = {
       ...registrationCenter,
-      password: await bcrypt.hash(registrationCenter.password, 10),
+      password: await bcrypt.hash(registrationCenter.password, salt),
     };
     const createdCenter = new this.registrationCenterModel(registrationCenter);
     return createdCenter.save();

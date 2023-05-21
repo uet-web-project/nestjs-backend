@@ -1,5 +1,5 @@
 import { Model } from 'mongoose';
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotAcceptableException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import {
   RegistrationDep,
@@ -31,9 +31,18 @@ export class RegistrationDepService {
   }
 
   async create(registrationDep: IRegistrationDep): Promise<RegistrationDep> {
+    const depIds = (await this.registrationDepModel.find().exec()).map((dep) =>
+      dep._id.toString(),
+    );
+
+    if (depIds.includes(registrationDep._id)) {
+      throw new NotAcceptableException('Department ID already exists');
+    }
+
+    const salt = await bcrypt.genSalt();
     registrationDep = {
       ...registrationDep,
-      password: await bcrypt.hash(registrationDep.password, 10),
+      password: await bcrypt.hash(registrationDep.password, salt),
     };
     const createdDep = new this.registrationDepModel(registrationDep);
     return createdDep.save();
@@ -47,12 +56,13 @@ export class RegistrationDepService {
 
   async genFakeData(): Promise<void> {
     const fakeData: IRegistrationDep[] = [];
+    const salt = await bcrypt.genSalt();
     for (let i = 0; i < 25; i++) {
       fakeData.push({
         _id: new ObjectId().toString(),
         depId: faker.datatype.number({ min: 100000, max: 999999 }).toString(),
         name: faker.company.name(),
-        password: await bcrypt.hash(faker.internet.password(8, true), 10),
+        password: await bcrypt.hash(faker.internet.password(8, true), salt),
       });
     }
     await this.registrationDepModel.insertMany(fakeData);

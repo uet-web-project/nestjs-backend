@@ -53,7 +53,7 @@ export class RegistrationCenterController {
     try {
       res.status(200).json(await this.registrationCenterService.create(body));
     } catch (error) {
-      res.status(404).json(error);
+      res.status(error.status || 404).json(error);
     }
   }
 
