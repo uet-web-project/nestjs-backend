@@ -74,6 +74,17 @@ export class VehicleController {
     }
   }
 
+  @Post('get-vehicles-by-type-and-date-range')
+  async getVehiclesByTypeAndDateRange(@Body() body, @Res() res): Promise<void> {
+    try {
+      res
+        .status(200)
+        .json(await this.vehicleService.getVehiclesByTypeAndDateRange(body));
+    } catch (error) {
+      res.status(error.status || 404).json(error);
+    }
+  }
+
   @Post()
   async create(@Body() body, @Res() res): Promise<void> {
     try {

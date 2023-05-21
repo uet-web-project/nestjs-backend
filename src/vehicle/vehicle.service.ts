@@ -41,11 +41,34 @@ export class VehicleService {
     return this.vehicleModel.find({ vehicleType: vehicleType }).exec();
   }
 
-  async getRegisteredVehiclesCount(filter: string): Promise<any> {
-    const findFilter = getFindFilterByDate(filter);
+  async getRegisteredVehiclesCount(
+    filter: string,
+    vehicleType?: string,
+    startDate?: string,
+    endDate?: string,
+  ): Promise<any> {
+    const findFilter = vehicleType
+      ? {
+          vehicleType,
+          ...getFindFilterByDate(filter, startDate, endDate),
+        }
+      : getFindFilterByDate(filter);
     const vehiclesRegisteredWithinFilter: Vehicle[] = await this.vehicleModel
       .find(findFilter)
       .exec();
+
+    if (new Date(startDate).getFullYear() === new Date(endDate).getFullYear()) {
+      if (new Date(startDate).getMonth() === new Date(endDate).getMonth()) {
+        filter = Flags.FILTER_BY_MONTH;
+      } else {
+        filter = Flags.FILTER_BY_YEAR;
+      }
+    } else {
+      filter = Flags.FILTER_BY_MANY_YEARS;
+    }
+
+    console.log(filter);
+
     let res: any;
     if (filter === Flags.FILTER_BY_WEEK) {
       res = [
@@ -116,6 +139,21 @@ export class VehicleService {
           },
         ).length;
       });
+    } else if (filter === Flags.FILTER_BY_MANY_YEARS) {
+      res = [];
+      for (
+        let year = new Date(startDate).getFullYear();
+        year <= new Date(endDate).getFullYear();
+        year++
+      ) {
+        res.push({
+          date: year.toString(),
+          vehicles: vehiclesRegisteredWithinFilter.filter((vehicle) => {
+            const date = new Date(vehicle.registrationDate);
+            return date.getFullYear() === year;
+          }).length,
+        });
+      }
     }
     return res;
   }
@@ -146,6 +184,22 @@ export class VehicleService {
         },
       ])
       .exec();
+  }
+
+  async getVehiclesByTypeAndDateRange(body: {
+    vehicleType: string;
+    filterType: string;
+    startDate?: string;
+    endDate?: string;
+  }): Promise<Vehicle[]> {
+    const res = await this.getRegisteredVehiclesCount(
+      body.filterType,
+      body.vehicleType,
+      body.startDate,
+      body.endDate,
+    );
+
+    return res;
   }
 
   async create(vehicle: IVehicle): Promise<Vehicle> {
@@ -218,8 +272,38 @@ export class VehicleService {
 }
 
 /**Get the find filter by date */
-function getFindFilterByDate(filter: string) {
+function getFindFilterByDate(
+  filter: string,
+  startDate?: string,
+  endDate?: string,
+) {
   let findFilter = {};
+  if (filter === Flags.FILTER_BY_DATE_RANGE) {
+    findFilter = {
+      $and: [
+        {
+          $expr: {
+            $gte: [
+              {
+                $dateFromString: { dateString: '$registrationDate' },
+              },
+              new Date(startDate),
+            ],
+          },
+        },
+        {
+          $expr: {
+            $lte: [
+              {
+                $dateFromString: { dateString: '$registrationDate' },
+              },
+              new Date(endDate),
+            ],
+          },
+        },
+      ],
+    };
+  }
   if (filter === Flags.FILTER_BY_WEEK) {
     findFilter = {
       $and: [
@@ -272,7 +356,7 @@ function getFindFilterByDate(filter: string) {
                   $dateFromString: { dateString: '$registrationDate' },
                 },
               },
-              new Date().getMonth() + 1,
+              new Date().getMonth() + 1, // + 1 because $month and Date.getMonth() return different values,
             ],
           },
         },
