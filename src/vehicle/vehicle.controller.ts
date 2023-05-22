@@ -5,6 +5,7 @@ import {
   Get,
   Param,
   Post,
+  Req,
   Res,
   UseGuards,
 } from '@nestjs/common';
@@ -52,11 +53,17 @@ export class VehicleController {
   }
 
   @Get('get-registered-vehicles-count/:filter')
-  async getRegisteredVehiclesCount(@Param('filter') filter, @Res() res) {
+  async getRegisteredVehiclesCount(
+    @Param('filter') filter,
+    @Req() req,
+    @Res() res,
+  ) {
     try {
       res
         .status(200)
-        .json(await this.vehicleService.getRegisteredVehiclesCount(filter));
+        .json(
+          await this.vehicleService.getRegisteredVehiclesCount(filter, req),
+        );
     } catch (error) {
       console.log(error);
       res.status(error.status || 404).json(error);
@@ -64,22 +71,32 @@ export class VehicleController {
   }
 
   @Get('group-by-vehicle-type/:filter')
-  async groupByVehicleType(@Param('filter') filter, @Res() res): Promise<void> {
+  async groupByVehicleType(
+    @Param('filter') filter,
+    @Req() req,
+    @Res() res,
+  ): Promise<void> {
     try {
       res
         .status(200)
-        .json(await this.vehicleService.groupByVehicleType(filter));
+        .json(await this.vehicleService.groupByVehicleType(filter, req));
     } catch (error) {
       res.status(error.status || 404).json(error);
     }
   }
 
   @Post('get-vehicles-by-type-and-date-range')
-  async getVehiclesByTypeAndDateRange(@Body() body, @Res() res): Promise<void> {
+  async getVehiclesByTypeAndDateRange(
+    @Body() body,
+    @Req() req,
+    @Res() res,
+  ): Promise<void> {
     try {
       res
         .status(200)
-        .json(await this.vehicleService.getVehiclesByTypeAndDateRange(body));
+        .json(
+          await this.vehicleService.getVehiclesByTypeAndDateRange(body, req),
+        );
     } catch (error) {
       res.status(error.status || 404).json(error);
     }
