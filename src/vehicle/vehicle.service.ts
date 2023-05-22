@@ -191,18 +191,127 @@ export class VehicleService {
 
   async getVehiclesByTypeAndDateRange(body: {
     vehicleType: string;
-    filterType: string;
-    startDate?: string;
-    endDate?: string;
-  }): Promise<Vehicle[]> {
-    const res = await this.getRegisteredVehiclesCount(
-      body.filterType,
-      body.vehicleType,
+    startDate: string;
+    endDate: string;
+  }): Promise<any> {
+    const matchFilter = getAggregationMatchFilterByDate(
+      Flags.FILTER_BY_DATE_RANGE,
       body.startDate,
       body.endDate,
     );
 
-    return res;
+    let filterType: string;
+    let groupId: any;
+    const startDateObj = new Date(body.startDate);
+    const endDateObj = new Date(body.endDate);
+    if (startDateObj.getFullYear() === endDateObj.getFullYear()) {
+      if (Math.abs(startDateObj.getMonth() - endDateObj.getMonth()) <= 1) {
+        filterType = Flags.FILTER_BY_DAY;
+        groupId = {
+          $dateFromString: {
+            dateString: '$registrationDate',
+          },
+        };
+      } else {
+        filterType = Flags.FILTER_BY_WEEK;
+        groupId = {
+          $dateFromParts: {
+            isoWeekYear: {
+              $year: {
+                $dateFromString: {
+                  dateString: '$registrationDate',
+                },
+              },
+            },
+            isoWeek: {
+              $week: {
+                $dateFromString: {
+                  dateString: '$registrationDate',
+                },
+              },
+            },
+          },
+        };
+      }
+    } else {
+      filterType = Flags.FILTER_BY_MONTH;
+      groupId = {
+        $dateFromParts: {
+          year: {
+            $year: {
+              $dateFromString: {
+                dateString: '$registrationDate',
+              },
+            },
+          },
+          month: {
+            $month: {
+              $dateFromString: {
+                dateString: '$registrationDate',
+              },
+            },
+          },
+        },
+      };
+    }
+
+    const groupAggregation = {
+      _id: groupId,
+      vehicles: { $sum: 1 },
+    };
+
+    return this.vehicleModel
+      .aggregate([
+        { $match: matchFilter },
+        { $group: groupAggregation },
+        { $sort: { _id: 1 } },
+        {
+          $project: {
+            date:
+              filterType === Flags.FILTER_BY_WEEK // will return a date range from the start of the week to the end of the week
+                ? {
+                    // ex: 17/04/2023 - 23/04/2023
+                    $concat: [
+                      {
+                        $dateToString: {
+                          format: '%d/%m/%Y',
+                          date: '$_id',
+                        },
+                      },
+                      ' - ',
+                      {
+                        $dateToString: {
+                          format: '%d/%m/%Y',
+                          date: {
+                            $dateFromParts: {
+                              isoWeekYear: {
+                                $year: '$_id',
+                              },
+                              isoWeek: {
+                                $week: '$_id',
+                              },
+                              isoDayOfWeek: 7,
+                            },
+                          },
+                        },
+                      },
+                    ],
+                  }
+                : {
+                    $dateToString: {
+                      format:
+                        filterType === Flags.FILTER_BY_DAY
+                          ? '%d/%m/%Y'
+                          : '%m/%Y',
+                      date: '$_id',
+                    },
+                  },
+            vehicles: 1,
+            _id: 0,
+          },
+        },
+      ])
+      .exec();
   }
 
   async create(vehicle: IVehicle): Promise<Vehicle> {
@@ -306,8 +415,7 @@ function getFindFilterByDate(
         },
       ],
     };
-  }
-  if (filter === Flags.FILTER_BY_WEEK) {
+  } else if (filter === Flags.FILTER_BY_WEEK) {
     findFilter = {
       $and: [
         {
@@ -379,9 +487,38 @@ function getFindFilterByDate(
 }
 
 /**Get aggregation match filter based on the input filter by date */
-function getAggregationMatchFilterByDate(filter: string) {
+function getAggregationMatchFilterByDate(
+  filter: string,
+  startDate?: string,
+  endDate?: string,
+) {
   let matchFilter = {};
-  if (filter === Flags.FILTER_BY_WEEK) {
+  if (filter === Flags.FILTER_BY_DATE_RANGE) {
+    matchFilter = {
+      $and: [
+        {
+          $expr: {
+            $gte: [
+              {
+                $dateFromString: { dateString: '$registrationDate' },
+              },
+              new Date(startDate),
+            ],
+          },
+        },
+        {
+          $expr: {
+            $lte: [
+              {
+                $dateFromString: { dateString: '$registrationDate' },
+              },
+              new Date(endDate),
+            ],
+          },
+        },
+      ],
+    };
+  } else if (filter === Flags.FILTER_BY_WEEK) {
     matchFilter = {
       $and: [
         {
