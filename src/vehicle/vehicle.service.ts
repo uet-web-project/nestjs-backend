@@ -133,8 +133,6 @@ export class VehicleService {
       ? getFindFilterByDate(filter, null, null, req.data._id)
       : getFindFilterByDate(filter);
 
-    console.log(matchFilter);
-
     return this.vehicleModel
       .aggregate([
         {
@@ -288,7 +286,49 @@ export class VehicleService {
       .exec();
   }
 
+  async getNearExpiredVehicles(req: any): Promise<Vehicle[]> {
+    const isCenter = req.data.centerId ? true : false;
+    const currentDate = new Date();
+    const nextMonth = new Date(
+      currentDate.setMonth(currentDate.getMonth() + 1),
+    );
+    return this.vehicleModel
+      .find({
+        $and: [
+          {
+            $expr: {
+              $gte: [
+                {
+                  $dateFromString: {
+                    dateString: '$registrationExpirationDate',
+                  },
+                },
+                new Date(),
+              ],
+            },
+          },
+          {
+            $expr: {
+              $lte: [
+                {
+                  $dateFromString: {
+                    dateString: '$registrationExpirationDate',
+                  },
+                },
+                new Date(nextMonth),
+              ],
+            },
+          },
+          isCenter ? { registrationCenter: req.data._id } : {},
+        ],
+      })
+      .exec();
+  }
+
   async create(vehicle: IVehicle): Promise<Vehicle> {
+    vehicle.registrationExpirationDate = getVehicleRegExpirationDate(vehicle);
+    console.log(vehicle);
+
     const newVehicle = new this.vehicleModel(vehicle);
     return newVehicle.save();
   }
@@ -320,29 +360,42 @@ export class VehicleService {
     );
     const ownersIds: string[] = owners.map((owner) => owner._id);
 
-    for (let i = 0; i < 500; i++) {
+    for (let i = 0; i < 200; i++) {
       const randomCenterIndex = Math.floor(
         Math.random() * registrationCentersIds.length,
       );
       const randomOwnerIndex = Math.floor(Math.random() * ownersIds.length);
       const randomVehicleTypeIndex = Math.floor(Math.random() * 3);
-      fakeData.push({
+      const randomLicensePlate = `${faker.datatype.number({
+        min: 27,
+        max: 32,
+      })}E-${faker.random.numeric(5)}`;
+      const randomVehicleVersion = faker.date
+        .between('2010-01-01', '2022-01-01')
+        .getFullYear()
+        .toString();
+      const fakeVehicle: IVehicle = {
         _id: new ObjectId().toString(),
         vin: faker.vehicle.vin(),
-        registrationNumber: faker.vehicle.vrm(),
+        registrationNumber: randomLicensePlate,
+        // registrationDate: faker.date
+        //   .between(`${randomVehicleVersion}-01-01`, new Date().toISOString())
+        //   .toISOString(),
         registrationDate: faker.date
-          .between('2010-01-01', new Date().toISOString())
+          .between(
+            `${2021}-${new Date().getMonth() + 1}-01`,
+            new Date().toISOString(),
+          )
           .toISOString(),
         registrationLocation: faker.address.city(),
-        vehicleType: vehicleTypes[randomVehicleTypeIndex],
+        // vehicleType: vehicleTypes[randomVehicleTypeIndex],
+        vehicleType: 'car',
         purpose: purposes[randomVehicleTypeIndex],
         manufacturer: faker.vehicle.manufacturer(),
         model: faker.vehicle.model(),
-        version: faker.date
-          .between('2010-01-01', '2022-01-01')
-          .getFullYear()
-          .toString(),
-        licensePlate: `30E-${faker.random.numeric(5)}`,
+        // version: randomVehicleVersion,
+        version: '2021',
+        licensePlate: randomLicensePlate,
         width: faker.datatype.number({ min: 1800, max: 2200 }),
         length: faker.datatype.number({ min: 4500, max: 6000 }),
         wheelBase: faker.datatype.number({ min: 2200, max: 3000 }),
@@ -350,10 +403,17 @@ export class VehicleService {
         mileage: faker.datatype.number({ min: 100, max: 100000 }),
         vehicleOwner: ownersIds[randomOwnerIndex],
         registrationCenter: registrationCentersIds[randomCenterIndex],
-      });
+      };
+      fakeVehicle.registrationExpirationDate =
+        getVehicleRegExpirationDate(fakeVehicle);
+      fakeData.push(fakeVehicle);
     }
     // console.log(fakeData);
     await this.vehicleModel.insertMany(fakeData);
+  }
+
+  async deleteAllFakeData(): Promise<void> {
+    await this.vehicleModel.deleteMany({}).exec();
   }
 }
 
@@ -469,4 +529,62 @@ function getFindFilterByDate(
     };
   }
   return findFilter;
+}
+
+function getVehicleRegExpirationDate(vehicle: IVehicle): string {
+  let expirationDate: string;
+  const currentDate = new Date();
+  const vehicleRegDate = new Date(vehicle.registrationDate);
+  const vehicleRegMonth = vehicleRegDate.getMonth();
+  switch (vehicle.vehicleType) {
+    case 'car':
+      if (vehicle.purpose === 'personal_transportation') {
+        if (parseInt(vehicle.version) >= currentDate.getFullYear() - 7) {
+          expirationDate = new Date(
+            vehicleRegDate.setMonth(vehicleRegMonth + 24),
+          ).toISOString();
+        } else if (
+          parseInt(vehicle.version) >=
+          currentDate.getFullYear() - 20
+        ) {
+          expirationDate = new Date(
+            vehicleRegDate.setMonth(vehicleRegMonth + 12),
+          ).toISOString();
+        } else {
+          expirationDate = new Date(
+            vehicleRegDate.setMonth(vehicleRegMonth + 6),
+          ).toISOString();
+        }
+      }
+      break;
+
+    case 'truck':
+      if (parseInt(vehicle.version) >= currentDate.getFullYear() - 7) {
+        expirationDate = new Date(
+          vehicleRegDate.setMonth(vehicleRegMonth + 12),
+        ).toISOString();
+      } else {
+        expirationDate = new Date(
+          vehicleRegDate.setMonth(vehicleRegMonth + 6),
+        ).toISOString();
+      }
+      break;
+
+    case 'bus':
+      if (parseInt(vehicle.version) >= currentDate.getFullYear() - 5) {
+        expirationDate = new Date(
+          vehicleRegDate.setMonth(vehicleRegMonth + 12),
+        ).toISOString();
+      } else {
+        expirationDate = new Date(
+          vehicleRegDate.setMonth(vehicleRegMonth + 6),
+        ).toISOString();
+      }
+      break;
+
+    default:
+      break;
+  }
+
+  return expirationDate;
 }

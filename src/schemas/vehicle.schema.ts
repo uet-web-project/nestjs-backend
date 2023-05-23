@@ -16,6 +16,9 @@ export class Vehicle {
   @Prop({ required: true })
   registrationDate: string;
 
+  @Prop()
+  registrationExpirationDate: string;
+
   @Prop({ required: true })
   registrationLocation: string;
 

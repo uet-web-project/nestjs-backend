@@ -85,6 +85,17 @@ export class VehicleController {
     }
   }
 
+  @Get('get-near-expired-vehicles')
+  async getNearExpiredVehicles(@Req() req, @Res() res): Promise<void> {
+    try {
+      res
+        .status(200)
+        .json(await this.vehicleService.getNearExpiredVehicles(req));
+    } catch (error) {
+      res.status(error.status || 404).json(error);
+    }
+  }
+
   @Post('get-vehicles-by-type-and-date-range')
   async getVehiclesByTypeAndDateRange(
     @Body() body,
@@ -115,6 +126,11 @@ export class VehicleController {
   async createMany(@Body() body, @Res() res): Promise<void> {
     await this.vehicleService.createMany(body);
     res.status(200).json('Success');
+  }
+
+  @Delete('delete-all-fake-data')
+  async deleteAllFakeData(): Promise<void> {
+    await this.vehicleService.deleteAllFakeData();
   }
 
   @Delete(':id')
