@@ -360,41 +360,41 @@ export class VehicleService {
     );
     const ownersIds: string[] = owners.map((owner) => owner._id);
 
-    for (let i = 0; i < 200; i++) {
+    for (let i = 0; i < 100; i++) {
       const randomCenterIndex = Math.floor(
         Math.random() * registrationCentersIds.length,
       );
       const randomOwnerIndex = Math.floor(Math.random() * ownersIds.length);
       const randomVehicleTypeIndex = Math.floor(Math.random() * 3);
       const randomLicensePlate = `${faker.datatype.number({
-        min: 27,
-        max: 32,
+        min: 25,
+        max: 35,
       })}E-${faker.random.numeric(5)}`;
       const randomVehicleVersion = faker.date
-        .between('2010-01-01', '2022-01-01')
+        .between('2020-01-01', '2023-01-01')
         .getFullYear()
         .toString();
       const fakeVehicle: IVehicle = {
         _id: new ObjectId().toString(),
         vin: faker.vehicle.vin(),
         registrationNumber: randomLicensePlate,
-        // registrationDate: faker.date
-        //   .between(`${randomVehicleVersion}-01-01`, new Date().toISOString())
-        //   .toISOString(),
         registrationDate: faker.date
-          .between(
-            `${2021}-${new Date().getMonth() + 1}-01`,
-            new Date().toISOString(),
-          )
+          .between(`${randomVehicleVersion}-01-01`, new Date().toISOString())
           .toISOString(),
+        // registrationDate: faker.date
+        //   .between(
+        //     `${2021}-${new Date().getMonth() + 1}-01`,
+        //     new Date().toISOString(),
+        //   )
+        //   .toISOString(),
         registrationLocation: faker.address.city(),
-        // vehicleType: vehicleTypes[randomVehicleTypeIndex],
-        vehicleType: 'car',
+        vehicleType: vehicleTypes[randomVehicleTypeIndex],
+        // vehicleType: 'car',
         purpose: purposes[randomVehicleTypeIndex],
         manufacturer: faker.vehicle.manufacturer(),
         model: faker.vehicle.model(),
-        // version: randomVehicleVersion,
-        version: '2021',
+        version: randomVehicleVersion,
+        // version: '2021',
         licensePlate: randomLicensePlate,
         width: faker.datatype.number({ min: 1800, max: 2200 }),
         length: faker.datatype.number({ min: 4500, max: 6000 }),
@@ -403,6 +403,7 @@ export class VehicleService {
         mileage: faker.datatype.number({ min: 100, max: 100000 }),
         vehicleOwner: ownersIds[randomOwnerIndex],
         registrationCenter: registrationCentersIds[randomCenterIndex],
+        // registrationCenter: '645cde729853fa379a8873ea',
       };
       fakeVehicle.registrationExpirationDate =
         getVehicleRegExpirationDate(fakeVehicle);
