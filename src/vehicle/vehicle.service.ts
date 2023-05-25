@@ -36,7 +36,7 @@ export class VehicleService {
   }
 
   async findByRegistrationCenter(centerId: string): Promise<Vehicle[]> {
-    return this.vehicleModel.find({ registrationCenter: centerId }).exec();
+    return this.vehicleModel.find({ registrationCenterId: centerId }).exec();
   }
 
   async findByVehicleType(vehicleType: string): Promise<Vehicle[]> {
@@ -45,13 +45,17 @@ export class VehicleService {
 
   async getRegisteredVehiclesCount(filter: string, req: any): Promise<any> {
     // check whether the user is a registration center or a department
-    const isCenter = req.data.centerId ? true : false;
-    const findFilter = isCenter
-      ? getFindFilterByDate(filter, null, null, req.data._id)
-      : getFindFilterByDate(filter);
+    const findFilter = getFindFilterByDate(
+      filter,
+      null,
+      null,
+      req.data.centerId ? req.data.centerId : null,
+    );
     const vehiclesRegisteredWithinFilter: Vehicle[] = await this.vehicleModel
       .find(findFilter)
       .exec();
+
+    console.log(findFilter);
 
     let res: any;
     if (filter === Flags.FILTER_BY_WEEK) {
@@ -129,11 +133,12 @@ export class VehicleService {
 
   /**Group vehicle by their type and filters by current week, month or year */
   async groupByVehicleType(filter: string, req: any): Promise<any> {
-    const isCenter = req.data.centerId ? true : false;
-
-    const matchFilter = isCenter
-      ? getFindFilterByDate(filter, null, null, req.data._id)
-      : getFindFilterByDate(filter);
+    const matchFilter = getFindFilterByDate(
+      filter,
+      null,
+      null,
+      req.data.centerId ? req.data.centerId : null,
+    );
 
     return this.vehicleModel
       .aggregate([
@@ -171,7 +176,7 @@ export class VehicleService {
       Flags.FILTER_BY_DATE_RANGE,
       body.startDate,
       body.endDate,
-      req.data.centerId ? req.data._id : null,
+      req.data.centerId ? req.data.centerId : null,
     );
 
     let filterType: string;
@@ -321,7 +326,7 @@ export class VehicleService {
               ],
             },
           },
-          isCenter ? { registrationCenter: req.data._id } : {},
+          isCenter ? { registrationCenterId: req.data.centerId } : {},
         ],
       })
       .exec();
@@ -368,7 +373,7 @@ export class VehicleService {
     );
     const ownersIds: string[] = owners.map((owner) => owner.cid);
 
-    for (let i = 0; i < 100; i++) {
+    for (let i = 0; i < 10; i++) {
       const randomCenterIndex = Math.floor(
         Math.random() * registrationCentersIds.length,
       );
@@ -379,7 +384,7 @@ export class VehicleService {
         max: 35,
       })}E-${faker.random.numeric(5)}`;
       const randomVehicleVersion = faker.date
-        .between('2021-01-01', '2023-01-01')
+        .between('2020-01-01', '2023-01-01')
         .getFullYear()
         .toString();
       const fakeVehicle: IVehicle = {
@@ -411,7 +416,7 @@ export class VehicleService {
         mileage: faker.datatype.number({ min: 100, max: 100000 }),
         vehicleOwnerCid: ownersIds[randomOwnerIndex],
         registrationCenterId: registrationCentersIds[randomCenterIndex],
-        // registrationCenter: '645cde729853fa379a8873ea',
+        // registrationCenterId: '654321',
       };
       fakeVehicle.registrationExpirationDate =
         getVehicleRegExpirationDate(fakeVehicle);
@@ -508,7 +513,7 @@ function getFindFilterByDate(
             ],
           },
         },
-        centerId ? { registrationCenter: new ObjectId(centerId) } : {},
+        centerId ? { registrationCenterId: centerId } : {},
       ],
     };
   } else if (filter === Flags.FILTER_BY_WEEK) {
@@ -538,7 +543,7 @@ function getFindFilterByDate(
             ],
           },
         },
-        centerId ? { registrationCenter: new ObjectId(centerId) } : {},
+        centerId ? { registrationCenterId: centerId } : {},
       ],
     };
   } else if (filter === Flags.FILTER_BY_MONTH) {
@@ -568,7 +573,7 @@ function getFindFilterByDate(
             ],
           },
         },
-        centerId ? { registrationCenter: new ObjectId(centerId) } : {},
+        centerId ? { registrationCenterId: centerId } : {},
       ],
     };
   } else if (filter === Flags.FILTER_BY_YEAR) {
@@ -584,7 +589,7 @@ function getFindFilterByDate(
             ],
           },
         },
-        centerId ? { registrationCenter: new ObjectId(centerId) } : {},
+        centerId ? { registrationCenterId: centerId } : {},
       ],
     };
   }
