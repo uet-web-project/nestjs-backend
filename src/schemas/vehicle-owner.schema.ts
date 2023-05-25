@@ -13,6 +13,15 @@ export class VehicleOwner {
 
   @Prop({ unique: true })
   cid: string;
+
+  @Prop({ required: true })
+  dob: string;
+
+  @Prop({ required: true })
+  address: string;
+
+  @Prop({ required: true })
+  phoneNumber: string;
 }
 
 export const VehicleOwnerSchema = SchemaFactory.createForClass(VehicleOwner);

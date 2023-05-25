@@ -7,10 +7,14 @@ import {
   Post,
   Req,
   Res,
+  UploadedFile,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common';
 import { VehicleService } from './vehicle.service';
 import { AuthGuard } from '../auth/auth.guard';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { diskStorage } from 'multer';
 
 @UseGuards(AuthGuard)
 @Controller('vehicle')
@@ -126,6 +130,21 @@ export class VehicleController {
   async createMany(@Body() body, @Res() res): Promise<void> {
     await this.vehicleService.createMany(body);
     res.status(200).json('Success');
+  }
+
+  @Post('upload-vehicles-sheet')
+  @UseInterceptors(
+    FileInterceptor('file', {
+      storage: diskStorage({
+        destination: './uploads',
+        filename: (req, file, cb) => {
+          cb(null, file.originalname);
+        },
+      }),
+    }),
+  )
+  async uploadVehiclesSheet(@UploadedFile() file: Express.Multer.File) {
+    this.vehicleService.uploadVehicles(file);
   }
 
   @Delete('delete-all-fake-data')

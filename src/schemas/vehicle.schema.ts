@@ -27,10 +27,11 @@ export class Vehicle {
 
   @Prop({
     required: true,
-    ref: VehicleOwner.name,
-    type: mongoose.Schema.Types.ObjectId,
+    // ref: VehicleOwner.name,
+    // type: mongoose.Schema.Types.ObjectId,
   })
-  vehicleOwner: VehicleOwner;
+  // vehicleOwnerCid: VehicleOwner;
+  vehicleOwnerCid: string;
 
   @Prop({ required: true, enum: ['car', 'truck', 'bus'] })
   vehicleType: string;
@@ -68,10 +69,11 @@ export class Vehicle {
 
   @Prop({
     required: true,
-    ref: RegistrationCenter.name,
-    type: mongoose.Schema.Types.ObjectId,
+    // ref: RegistrationCenter.name,
+    // type: mongoose.Schema.Types.ObjectId,
   })
-  registrationCenter: RegistrationCenter;
+  // registrationCenterId: RegistrationCenter;
+  registrationCenterId: string;
 }
 
 export const VehicleSchema = SchemaFactory.createForClass(Vehicle);

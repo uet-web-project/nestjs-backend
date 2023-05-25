@@ -35,6 +35,11 @@ export class VehicleOwnerController {
     }
   }
 
+  @Delete('delete-all-fake-data')
+  async deleteAllFakeData(): Promise<void> {
+    await this.vehicleOwnerService.deleteAllFakeData();
+  }
+
   @Delete(':id')
   async deleteById(@Param('id') id, @Res() res): Promise<void> {
     try {

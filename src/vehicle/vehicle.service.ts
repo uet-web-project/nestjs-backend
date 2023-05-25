@@ -9,6 +9,8 @@ import { ObjectId } from 'bson';
 import { faker } from '@faker-js/faker';
 import { Flags } from 'src/constants/Flags';
 import getCurrentWeekOfYear from 'src/utils/getCurrentWeekOfTheYear';
+import xlsxToJson from 'src/utils/xlsxToJson';
+import { IVehicleOwner } from 'src/interfaces/vehicleOwner.interface';
 
 @Injectable()
 export class VehicleService {
@@ -338,6 +340,12 @@ export class VehicleService {
     console.log(res);
   }
 
+  async uploadVehicles(file: Express.Multer.File): Promise<void> {
+    const vehicleJson = xlsxToJson(file.path);
+    const remodeledVehicleJson = await this.remodelJsonData(vehicleJson);
+    console.log('Remodeled JSON: \n', remodeledVehicleJson);
+  }
+
   async deleteById(id: string): Promise<void> {
     await this.vehicleModel.findByIdAndDelete(id).exec();
   }
@@ -356,9 +364,9 @@ export class VehicleService {
     const owners: any[] = await this.vehicleOwnerService.findAll();
 
     const registrationCentersIds: string[] = registrationCenters.map(
-      (center) => center._id,
+      (center) => center.centerId,
     );
-    const ownersIds: string[] = owners.map((owner) => owner._id);
+    const ownersIds: string[] = owners.map((owner) => owner.cid);
 
     for (let i = 0; i < 100; i++) {
       const randomCenterIndex = Math.floor(
@@ -371,7 +379,7 @@ export class VehicleService {
         max: 35,
       })}E-${faker.random.numeric(5)}`;
       const randomVehicleVersion = faker.date
-        .between('2020-01-01', '2023-01-01')
+        .between('2021-01-01', '2023-01-01')
         .getFullYear()
         .toString();
       const fakeVehicle: IVehicle = {
@@ -401,8 +409,8 @@ export class VehicleService {
         wheelBase: faker.datatype.number({ min: 2200, max: 3000 }),
         emission: faker.datatype.number({ min: 4, max: 7 }),
         mileage: faker.datatype.number({ min: 100, max: 100000 }),
-        vehicleOwner: ownersIds[randomOwnerIndex],
-        registrationCenter: registrationCentersIds[randomCenterIndex],
+        vehicleOwnerCid: ownersIds[randomOwnerIndex],
+        registrationCenterId: registrationCentersIds[randomCenterIndex],
         // registrationCenter: '645cde729853fa379a8873ea',
       };
       fakeVehicle.registrationExpirationDate =
@@ -415,6 +423,57 @@ export class VehicleService {
 
   async deleteAllFakeData(): Promise<void> {
     await this.vehicleModel.deleteMany({}).exec();
+  }
+
+  async remodelJsonData(json: any[]): Promise<IVehicle[]> {
+    const ownerCids = await this.vehicleOwnerService.getAllOwnerCids();
+    const newOwners: IVehicleOwner[] = [];
+    const newVehicles: IVehicle[] = [];
+
+    json.map((data: any) => {
+      const newVehicle: IVehicle = {
+        licensePlate: data.licensePlate,
+        vehicleType: data.vehicleType,
+        vin: data.vin,
+        manufacturer: data.manufacturer,
+        model: data.model,
+        version: data.version.toString(),
+        registrationNumber: data.registrationNumber,
+        registrationDate: new Date(data.registrationDate).toISOString(),
+        registrationCenterId: data.registrationCenterId.toString(),
+        registrationLocation: data.registrationLocation,
+        purpose: data.purpose,
+        width: data.width,
+        length: data.length,
+        wheelBase: data.wheelBase,
+        emission: data.emission,
+        mileage: data.mileage,
+        vehicleOwnerCid: data.vehicleOwnerCid.toString(),
+      };
+
+      if (!ownerCids.includes(data.vehicleOwnerCid)) {
+        const newOwner: IVehicleOwner = {
+          cid: data.vehicleOwnerCid,
+          name: data.ownerName,
+          address: data.ownerAddress,
+          ownerType: data.ownerType,
+          dob: data.ownerDob,
+          phoneNumber: data.ownerPhoneNumber,
+        };
+        newOwners.push(newOwner);
+        ownerCids.push(data.vehicleOwnerCid);
+      }
+
+      newVehicles.push(newVehicle);
+    });
+
+    if (newOwners.length > 0) {
+      console.log(`there are ${newOwners.length} new owners`);
+
+      // await this.vehicleOwnerService.createMany(newOwners);
+    }
+
+    return newVehicles;
   }
 }
 
