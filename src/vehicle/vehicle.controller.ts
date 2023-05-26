@@ -74,27 +74,27 @@ export class VehicleController {
     }
   }
 
-  @Get('group-by-vehicle-type/:filter')
-  async groupByVehicleType(
-    @Param('filter') filter,
-    @Req() req,
-    @Res() res,
-  ): Promise<void> {
-    try {
-      res
-        .status(200)
-        .json(await this.vehicleService.groupByVehicleType(filter, req));
-    } catch (error) {
-      res.status(error.status || 404).json(error);
-    }
-  }
-
   @Get('get-near-expired-vehicles')
   async getNearExpiredVehicles(@Req() req, @Res() res): Promise<void> {
     try {
       res
         .status(200)
         .json(await this.vehicleService.getNearExpiredVehicles(req));
+    } catch (error) {
+      res.status(error.status || 404).json(error);
+    }
+  }
+
+  @Post('group-by-vehicle-type')
+  async groupByVehicleType(
+    @Body() body,
+    @Req() req,
+    @Res() res,
+  ): Promise<void> {
+    try {
+      res
+        .status(200)
+        .json(await this.vehicleService.groupByVehicleType(body, req));
     } catch (error) {
       res.status(error.status || 404).json(error);
     }

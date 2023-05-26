@@ -132,11 +132,14 @@ export class VehicleService {
   }
 
   /**Group vehicle by their type and filters by current week, month or year */
-  async groupByVehicleType(filter: string, req: any): Promise<any> {
+  async groupByVehicleType(
+    body: { filterType: string; startDate?: string; endDate?: string },
+    req: any,
+  ): Promise<any> {
     const matchFilter = getFindFilterByDate(
-      filter,
-      null,
-      null,
+      body.filterType,
+      body.startDate ? body.startDate : null,
+      body.endDate ? body.endDate : null,
       req.data.centerId ? req.data.centerId : null,
     );
 
