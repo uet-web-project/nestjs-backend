@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, BadRequestException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Vehicle, VehicleDocument } from '../schemas/vehicle.schema';
@@ -11,6 +11,8 @@ import { Flags } from 'src/constants/Flags';
 import getCurrentWeekOfYear from 'src/utils/getCurrentWeekOfTheYear';
 import xlsxToJson from 'src/utils/xlsxToJson';
 import { IVehicleOwner } from 'src/interfaces/vehicleOwner.interface';
+import { getJsDateFromExcel } from 'excel-date-to-js';
+import excelJsonChecker from 'src/utils/excelJsonChecker';
 
 @Injectable()
 export class VehicleService {
@@ -348,10 +350,24 @@ export class VehicleService {
     console.log(res);
   }
 
+  async createVehicleFromCertificate(data) {
+    try {
+      const remodelCertData = await this.remodelJsonData([data]);
+      return await this.create(remodelCertData[0]);
+    } catch (err) {
+      throw err;
+    }
+  }
+
   async uploadVehicles(file: Express.Multer.File): Promise<void> {
-    const vehicleJson = xlsxToJson(file.path);
-    const remodeledVehicleJson = await this.remodelJsonData(vehicleJson);
-    console.log('Remodeled JSON: \n', remodeledVehicleJson);
+    try {
+      const vehicleJson = xlsxToJson(file.path);
+      const remodeledVehicleJson = await this.remodelJsonData(vehicleJson);
+      // console.log('Remodeled JSON: \n', remodeledVehicleJson);
+      return await this.createMany(remodeledVehicleJson);
+    } catch (err) {
+      throw err;
+    }
   }
 
   async deleteById(id: string): Promise<void> {
@@ -433,12 +449,19 @@ export class VehicleService {
     await this.vehicleModel.deleteMany({}).exec();
   }
 
+  /**Convert JSON data obtained from excel file to a JSON that can be used as a parameter to the insertMany method of MongoDB */
   async remodelJsonData(json: any[]): Promise<IVehicle[]> {
+    // let errorEncountered = false;
     const ownerCids = await this.vehicleOwnerService.getAllOwnerCids();
     const newOwners: IVehicleOwner[] = [];
     const newVehicles: IVehicle[] = [];
 
     json.map((data: any) => {
+      if (!excelJsonChecker(data)) {
+        throw new BadRequestException(
+          'Invalid excel file. Please check the file and try again.',
+        );
+      }
       const newVehicle: IVehicle = {
         licensePlate: data.licensePlate,
         vehicleType: data.vehicleType,
@@ -447,7 +470,9 @@ export class VehicleService {
         model: data.model,
         version: data.version.toString(),
         registrationNumber: data.registrationNumber,
-        registrationDate: new Date(data.registrationDate).toISOString(),
+        registrationDate: new Date(
+          getJsDateFromExcel(data.registrationDate),
+        ).toISOString(),
         registrationCenterId: data.registrationCenterId.toString(),
         registrationLocation: data.registrationLocation,
         purpose: data.purpose,
@@ -459,17 +484,17 @@ export class VehicleService {
         vehicleOwnerCid: data.vehicleOwnerCid.toString(),
       };
 
-      if (!ownerCids.includes(data.vehicleOwnerCid)) {
+      if (!ownerCids.includes(data.vehicleOwnerCid.toString())) {
         const newOwner: IVehicleOwner = {
-          cid: data.vehicleOwnerCid,
+          cid: data.vehicleOwnerCid.toString(),
           name: data.ownerName,
           address: data.ownerAddress,
           ownerType: data.ownerType,
-          dob: data.ownerDob,
+          dob: new Date(getJsDateFromExcel(data.ownerDob)).toISOString(),
           phoneNumber: data.ownerPhoneNumber,
         };
         newOwners.push(newOwner);
-        ownerCids.push(data.vehicleOwnerCid);
+        ownerCids.push(data.vehicleOwnerCid.toString());
       }
 
       newVehicles.push(newVehicle);
@@ -478,7 +503,7 @@ export class VehicleService {
     if (newOwners.length > 0) {
       console.log(`there are ${newOwners.length} new owners`);
 
-      // await this.vehicleOwnerService.createMany(newOwners);
+      await this.vehicleOwnerService.createMany(newOwners);
     }
 
     return newVehicles;

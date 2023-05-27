@@ -132,6 +132,24 @@ export class VehicleController {
     res.status(200).json('Success');
   }
 
+  @Post('create-vehicle-from-certificate')
+  async createVehicleFromCertificate(
+    @Body() body: { certificate: any },
+    @Res() res,
+  ): Promise<void> {
+    try {
+      res
+        .status(200)
+        .json(
+          await this.vehicleService.createVehicleFromCertificate(
+            body.certificate,
+          ),
+        );
+    } catch (error) {
+      res.status(error.status || 404).json(error);
+    }
+  }
+
   @Post('upload-vehicles-sheet')
   @UseInterceptors(
     FileInterceptor('file', {
@@ -143,8 +161,15 @@ export class VehicleController {
       }),
     }),
   )
-  async uploadVehiclesSheet(@UploadedFile() file: Express.Multer.File) {
-    this.vehicleService.uploadVehicles(file);
+  async uploadVehiclesSheet(
+    @UploadedFile() file: Express.Multer.File,
+    @Res() res,
+  ) {
+    try {
+      res.status(200).json(await this.vehicleService.uploadVehicles(file));
+    } catch (err) {
+      res.status(err.status || 404).json(err);
+    }
   }
 
   @Delete('delete-all-fake-data')
