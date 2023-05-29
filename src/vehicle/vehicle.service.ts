@@ -452,17 +452,38 @@ export class VehicleService {
 
   /**Convert JSON data obtained from excel file to a JSON that can be used as a parameter to the insertMany method of MongoDB */
   async remodelJsonData(json: any[]): Promise<IVehicle[]> {
-    // let errorEncountered = false;
+    const existingVehicles = await this.findAll();
     const ownerCids = await this.vehicleOwnerService.getAllOwnerCids();
     const newOwners: IVehicleOwner[] = [];
     const newVehicles: IVehicle[] = [];
+    const existingVehiclesLicensePlates: string[] = existingVehicles.map(
+      (vehicle) => vehicle.licensePlate,
+    );
+    const existingVehiclesVins: string[] = existingVehicles.map(
+      (vehicle) => vehicle.vin,
+    );
 
     json.map((data: any) => {
+      // check if the excel file is valid (has all the correct fields or not)
       if (!excelJsonChecker(data)) {
         throw new BadRequestException(
           'Invalid excel file. Please check the file and try again.',
         );
       }
+      // check for existing license plates and vins
+      if (existingVehiclesLicensePlates.includes(data.licensePlate)) {
+        throw new BadRequestException(
+          `License plate ${data.licensePlate} already exists.`,
+        );
+      } else {
+        existingVehiclesLicensePlates.push(data.licensePlate);
+      }
+      if (existingVehiclesVins.includes(data.vin)) {
+        throw new BadRequestException(`VIN ${data.vin} already exists.`);
+      } else {
+        existingVehiclesVins.push(data.vin);
+      }
+
       const newVehicle: IVehicle = {
         licensePlate: data.licensePlate,
         vehicleType: data.vehicleType,
@@ -503,9 +524,8 @@ export class VehicleService {
       newVehicles.push(newVehicle);
     });
 
+    // add new owner to the database
     if (newOwners.length > 0) {
-      console.log(`there are ${newOwners.length} new owners`);
-
       await this.vehicleOwnerService.createMany(newOwners);
     }
 
