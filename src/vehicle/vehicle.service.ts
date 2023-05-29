@@ -13,6 +13,7 @@ import xlsxToJson from 'src/utils/xlsxToJson';
 import { IVehicleOwner } from 'src/interfaces/vehicleOwner.interface';
 import { getJsDateFromExcel } from 'excel-date-to-js';
 import excelJsonChecker from 'src/utils/excelJsonChecker';
+import isIsoString from 'src/utils/isIsoString';
 
 @Injectable()
 export class VehicleService {
@@ -470,9 +471,9 @@ export class VehicleService {
         model: data.model,
         version: data.version.toString(),
         registrationNumber: data.registrationNumber,
-        registrationDate: new Date(
-          getJsDateFromExcel(data.registrationDate),
-        ).toISOString(),
+        registrationDate: isIsoString(data.registrationDate)
+          ? data.registrationDate
+          : new Date(getJsDateFromExcel(data.registrationDate)).toISOString(),
         registrationCenterId: data.registrationCenterId.toString(),
         registrationLocation: data.registrationLocation,
         purpose: data.purpose,
@@ -490,7 +491,9 @@ export class VehicleService {
           name: data.ownerName,
           address: data.ownerAddress,
           ownerType: data.ownerType,
-          dob: new Date(getJsDateFromExcel(data.ownerDob)).toISOString(),
+          dob: isIsoString(data.ownerDob)
+            ? data.ownerDob
+            : new Date(getJsDateFromExcel(data.ownerDob)).toISOString(),
           phoneNumber: data.ownerPhoneNumber,
         };
         newOwners.push(newOwner);
