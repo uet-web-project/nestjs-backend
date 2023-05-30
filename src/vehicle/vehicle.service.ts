@@ -83,8 +83,6 @@ export class VehicleService {
       .find(findFilter)
       .exec();
 
-    console.log(findFilter);
-
     let res: any;
     if (filter === Flags.FILTER_BY_WEEK) {
       res = [
@@ -385,7 +383,6 @@ export class VehicleService {
 
   async create(vehicle: IVehicle): Promise<Vehicle> {
     vehicle.registrationExpirationDate = getVehicleRegExpirationDate(vehicle);
-    console.log(vehicle);
 
     const newVehicle = new this.vehicleModel(vehicle);
     return newVehicle.save();
@@ -393,7 +390,6 @@ export class VehicleService {
 
   async createMany(vehicles: IVehicle[]): Promise<void> {
     const res = await this.vehicleModel.insertMany(vehicles);
-    console.log(res);
   }
 
   async createVehicleFromCertificate(data) {
@@ -609,7 +605,12 @@ function getFindFilterByDate(
             ],
           },
         },
-        centerId ? { registrationCenterId: centerId } : {},
+        centerId
+          ? {
+              registrationCenterId:
+                typeof centerId === 'string' ? centerId : { $in: centerId },
+            }
+          : {},
       ],
     };
   } else if (filter === Flags.FILTER_BY_WEEK) {
@@ -639,7 +640,12 @@ function getFindFilterByDate(
             ],
           },
         },
-        centerId ? { registrationCenterId: centerId } : {},
+        centerId
+          ? {
+              registrationCenterId:
+                typeof centerId === 'string' ? centerId : { $in: centerId },
+            }
+          : {},
       ],
     };
   } else if (filter === Flags.FILTER_BY_MONTH) {
@@ -669,7 +675,12 @@ function getFindFilterByDate(
             ],
           },
         },
-        centerId ? { registrationCenterId: centerId } : {},
+        centerId
+          ? {
+              registrationCenterId:
+                typeof centerId === 'string' ? centerId : { $in: centerId },
+            }
+          : {},
       ],
     };
   } else if (filter === Flags.FILTER_BY_YEAR) {
@@ -685,7 +696,12 @@ function getFindFilterByDate(
             ],
           },
         },
-        centerId ? { registrationCenterId: centerId } : {},
+        centerId
+          ? {
+              registrationCenterId:
+                typeof centerId === 'string' ? centerId : { $in: centerId },
+            }
+          : {},
       ],
     };
   }
