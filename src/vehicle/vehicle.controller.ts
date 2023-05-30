@@ -31,12 +31,23 @@ export class VehicleController {
     res.status(200).json(await this.vehicleService.findExpired());
   }
 
-  @Get('get-by-registration-center/:id')
-  async findByRegistrationCenter(@Param('id') id, @Res() res): Promise<void> {
+  @Get('get-by-registration-dep')
+  async findByRegistrationDep(@Req() req, @Res() res): Promise<void> {
     try {
       res
         .status(200)
-        .json(await this.vehicleService.findByRegistrationCenter(id));
+        .json(await this.vehicleService.findByRegistrationDep(req));
+    } catch (error) {
+      res.status(error.status || 404).json(error);
+    }
+  }
+
+  @Get('get-by-registration-center')
+  async findByRegistrationCenter(@Req() req, @Res() res): Promise<void> {
+    try {
+      res
+        .status(200)
+        .json(await this.vehicleService.findByRegistrationCenter(req));
     } catch (error) {
       res.status(error.status || 404).json(error);
     }

@@ -1,4 +1,8 @@
-import { Injectable, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  BadRequestException,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Vehicle, VehicleDocument } from '../schemas/vehicle.schema';
@@ -14,6 +18,7 @@ import { IVehicleOwner } from 'src/interfaces/vehicleOwner.interface';
 import { getJsDateFromExcel } from 'excel-date-to-js';
 import excelJsonChecker from 'src/utils/excelJsonChecker';
 import isIsoString from 'src/utils/isIsoString';
+import { RegistrationDepService } from 'src/registration-dep/registration-dep.service';
 
 @Injectable()
 export class VehicleService {
@@ -21,6 +26,7 @@ export class VehicleService {
     @InjectModel(Vehicle.name) private vehicleModel: Model<VehicleDocument>,
     private registrationCenterService: RegistrationCenterService,
     private vehicleOwnerService: VehicleOwnerService,
+    private registrationDepService: RegistrationDepService,
   ) {}
 
   async findAll(): Promise<Vehicle[]> {
@@ -38,7 +44,21 @@ export class VehicleService {
       .exec();
   }
 
-  async findByRegistrationCenter(centerId: string): Promise<Vehicle[]> {
+  async findByRegistrationDep(req: any): Promise<Vehicle[]> {
+    if (!req.data.depId) {
+      throw new UnauthorizedException('Unoauthorized token');
+    }
+    const depId = req.data._id;
+    const centers = await this.registrationCenterService.findByDepId(depId);
+    const centerIds = centers.map((center) => center.centerId);
+    return this.vehicleModel.find({ registrationCenterId: centerIds }).exec();
+  }
+
+  async findByRegistrationCenter(req: any): Promise<Vehicle[]> {
+    if (!req.data.centerId) {
+      throw new UnauthorizedException('Unoauthorized token');
+    }
+    const centerId = req.data.centerId;
     return this.vehicleModel.find({ registrationCenterId: centerId }).exec();
   }
 
@@ -47,13 +67,18 @@ export class VehicleService {
   }
 
   async getRegisteredVehiclesCount(filter: string, req: any): Promise<any> {
+    let centerId: string | string[] = null;
+    if (req.data.depId) {
+      const centers = await this.registrationCenterService.findByDepId(
+        req.data._id,
+      );
+      centerId = centers.map((center) => center.centerId);
+    } else if (req.data.centerId) {
+      centerId = req.data.centerId;
+    }
+
     // check whether the user is a registration center or a department
-    const findFilter = getFindFilterByDate(
-      filter,
-      null,
-      null,
-      req.data.centerId ? req.data.centerId : null,
-    );
+    const findFilter = getFindFilterByDate(filter, null, null, centerId);
     const vehiclesRegisteredWithinFilter: Vehicle[] = await this.vehicleModel
       .find(findFilter)
       .exec();
@@ -139,11 +164,21 @@ export class VehicleService {
     body: { filterType: string; startDate?: string; endDate?: string },
     req: any,
   ): Promise<any> {
+    let centerId: string | string[] = null;
+    if (req.data.depId) {
+      const centers = await this.registrationCenterService.findByDepId(
+        req.data._id,
+      );
+      centerId = centers.map((center) => center.centerId);
+    } else if (req.data.centerId) {
+      centerId = req.data.centerId;
+    }
+
     const matchFilter = getFindFilterByDate(
       body.filterType,
       body.startDate ? body.startDate : null,
       body.endDate ? body.endDate : null,
-      req.data.centerId ? req.data.centerId : null,
+      centerId,
     );
 
     return this.vehicleModel
@@ -178,11 +213,21 @@ export class VehicleService {
     },
     req: any,
   ): Promise<any> {
+    let centerId: string | string[] = null;
+    if (req.data.depId) {
+      const centers = await this.registrationCenterService.findByDepId(
+        req.data._id,
+      );
+      centerId = centers.map((center) => center.centerId);
+    } else if (req.data.centerId) {
+      centerId = req.data.centerId;
+    }
+
     const matchFilter = getFindFilterByDate(
       Flags.FILTER_BY_DATE_RANGE,
       body.startDate,
       body.endDate,
-      req.data.centerId ? req.data.centerId : null,
+      centerId,
     );
 
     let filterType: string;
@@ -538,7 +583,7 @@ function getFindFilterByDate(
   filter: string,
   startDate?: string,
   endDate?: string,
-  centerId?: string,
+  centerId?: string | string[],
 ) {
   let findFilter = {};
   if (filter === Flags.FILTER_BY_DATE_RANGE) {
