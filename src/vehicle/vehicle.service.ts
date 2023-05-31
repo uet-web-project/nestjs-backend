@@ -205,7 +205,7 @@ export class VehicleService {
 
   async getVehiclesByTypeAndDateRange(
     body: {
-      vehicleType: string;
+      vehicleType?: string;
       startDate: string;
       endDate: string;
     },
@@ -226,6 +226,7 @@ export class VehicleService {
       body.startDate,
       body.endDate,
       centerId,
+      body.vehicleType,
     );
 
     let filterType: string;
