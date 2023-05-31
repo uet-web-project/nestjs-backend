@@ -31,6 +31,37 @@ export class RegistrationCenterService {
     return this.registrationCenterModel.find({ registrationDep: depId }).exec();
   }
 
+  async getProfile(req: any): Promise<RegistrationCenter> {
+    const center: RegistrationCenter = await this.registrationCenterModel
+      .findOne({ _id: req.data._id })
+      .exec();
+    if (center) {
+      return center;
+    } else {
+      throw new NotAcceptableException('Center does not exist');
+    }
+  }
+
+  async updateProfile(req: any, data: IRegistrationCenter) {
+    const center: RegistrationCenter = await this.registrationCenterModel
+      .findOne({ _id: req.data._id })
+      .exec();
+
+    if (center) {
+      if (data.password) {
+        const salt = await bcrypt.genSalt();
+        data.password = await bcrypt.hash(data.password, salt);
+      }
+      return this.registrationCenterModel
+        .findOneAndUpdate({ _id: req.data._id }, data, {
+          returnOriginal: false,
+        })
+        .exec();
+    } else {
+      throw new NotAcceptableException('Center does not exist');
+    }
+  }
+
   async create(
     registrationCenter: IRegistrationCenter,
   ): Promise<RegistrationCenter> {

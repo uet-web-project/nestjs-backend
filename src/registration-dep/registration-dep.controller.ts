@@ -33,8 +33,27 @@ export class RegistrationDepController {
   }
 
   @Get('profile')
-  async getProfile(@Req() req): Promise<IRegistrationDep> {
-    return req.data;
+  async getProfile(@Req() req, @Res() res): Promise<void> {
+    try {
+      res.status(200).json(await this.registrationDepService.getProfile(req));
+    } catch (error) {
+      res.status(error.status || 404).json(error);
+    }
+  }
+
+  @Post('profile')
+  async updateProfile(
+    @Req() req,
+    @Res() res,
+    @Body() data: IRegistrationDep,
+  ): Promise<void> {
+    try {
+      res
+        .status(200)
+        .json(await this.registrationDepService.updateProfile(req, data));
+    } catch (error) {
+      res.status(error.status || 404).json(error);
+    }
   }
 
   @Post()

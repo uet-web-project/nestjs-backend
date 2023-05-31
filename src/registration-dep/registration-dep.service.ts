@@ -30,6 +30,37 @@ export class RegistrationDepService {
     return this.registrationDepModel.findOne({ name: depName }).exec();
   }
 
+  async getProfile(req: any): Promise<RegistrationDep> {
+    const dep: RegistrationDep = await this.registrationDepModel
+      .findOne({ _id: req.data._id })
+      .exec();
+    if (dep) {
+      return dep;
+    } else {
+      throw new NotAcceptableException('Department does not exist');
+    }
+  }
+
+  async updateProfile(req: any, data: IRegistrationDep) {
+    const dep: RegistrationDep = await this.registrationDepModel
+      .findOne({ _id: req.data._id })
+      .exec();
+
+    if (dep) {
+      if (data.password) {
+        const salt = await bcrypt.genSalt();
+        data.password = await bcrypt.hash(data.password, salt);
+      }
+      return this.registrationDepModel
+        .findOneAndUpdate({ _id: req.data._id }, data, {
+          returnOriginal: false,
+        })
+        .exec();
+    } else {
+      throw new NotAcceptableException('Department does not exist');
+    }
+  }
+
   async create(registrationDep: IRegistrationDep): Promise<RegistrationDep> {
     const depIds = (await this.registrationDepModel.find().exec()).map((dep) =>
       dep._id.toString(),

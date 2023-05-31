@@ -11,7 +11,6 @@ import {
 } from '@nestjs/common';
 import { RegistrationCenterService } from './registration-center.service';
 import { AuthGuard } from '../auth/auth.guard';
-import { RegistrationCenter } from '../schemas/registration-center.schema';
 
 @UseGuards(AuthGuard)
 @Controller('registration-center')
@@ -44,8 +43,25 @@ export class RegistrationCenterController {
   }
 
   @Get('profile')
-  async getProfile(@Req() req): Promise<RegistrationCenter> {
-    return req.data;
+  async getProfile(@Req() req, @Res() res): Promise<void> {
+    try {
+      res
+        .status(200)
+        .json(await this.registrationCenterService.getProfile(req));
+    } catch (error) {
+      res.status(error.status || 404).json(error);
+    }
+  }
+
+  @Post('profile')
+  async updateProfile(@Req() req, @Res() res, @Body() body): Promise<void> {
+    try {
+      res
+        .status(200)
+        .json(await this.registrationCenterService.updateProfile(req, body));
+    } catch (error) {
+      res.status(error.status || 404).json(error);
+    }
   }
 
   @Post()
