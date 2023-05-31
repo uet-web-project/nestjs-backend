@@ -580,6 +580,7 @@ function getFindFilterByDate(
   startDate?: string,
   endDate?: string,
   centerId?: string | string[],
+  vehicleType?: string,
 ) {
   let findFilter = {};
   if (filter === Flags.FILTER_BY_DATE_RANGE) {
@@ -611,6 +612,7 @@ function getFindFilterByDate(
                 typeof centerId === 'string' ? centerId : { $in: centerId },
             }
           : {},
+        vehicleType ? { vehicleType: vehicleType } : {},
       ],
     };
   } else if (filter === Flags.FILTER_BY_WEEK) {
@@ -646,6 +648,7 @@ function getFindFilterByDate(
                 typeof centerId === 'string' ? centerId : { $in: centerId },
             }
           : {},
+        vehicleType ? { vehicleType: vehicleType } : {},
       ],
     };
   } else if (filter === Flags.FILTER_BY_MONTH) {
@@ -681,6 +684,7 @@ function getFindFilterByDate(
                 typeof centerId === 'string' ? centerId : { $in: centerId },
             }
           : {},
+        vehicleType ? { vehicleType: vehicleType } : {},
       ],
     };
   } else if (filter === Flags.FILTER_BY_YEAR) {
@@ -702,6 +706,7 @@ function getFindFilterByDate(
                 typeof centerId === 'string' ? centerId : { $in: centerId },
             }
           : {},
+        vehicleType ? { vehicleType: vehicleType } : {},
       ],
     };
   }
