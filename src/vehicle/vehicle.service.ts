@@ -78,7 +78,7 @@ export class VehicleService {
     }
 
     // check whether the user is a registration center or a department
-    const findFilter = getFindFilterByDate(filter, null, null, centerId);
+    const findFilter = getFindFilterByDate(filter, centerId, null, null);
     const vehiclesRegisteredWithinFilter: Vehicle[] = await this.vehicleModel
       .find(findFilter)
       .exec();
@@ -159,7 +159,12 @@ export class VehicleService {
 
   /**Group vehicle by their type and filters by current week, month or year */
   async groupByVehicleType(
-    body: { filterType: string; startDate?: string; endDate?: string },
+    body: {
+      filterType: string;
+      startDate?: string;
+      endDate?: string;
+      getNearExpired?: boolean;
+    },
     req: any,
   ): Promise<any> {
     let centerId: string | string[] = null;
@@ -174,10 +179,16 @@ export class VehicleService {
 
     const matchFilter = getFindFilterByDate(
       body.filterType,
+      centerId,
       body.startDate ? body.startDate : null,
       body.endDate ? body.endDate : null,
-      centerId,
+      null,
+      body.getNearExpired,
     );
+
+    // console.log('group by vehicle type', matchFilter);
+
+    // console.log(await this.vehicleModel.find(matchFilter).exec());
 
     return this.vehicleModel
       .aggregate([
@@ -188,7 +199,12 @@ export class VehicleService {
           $group: {
             _id: '$vehicleType',
             vehicles: { $sum: 1 }, // sum of each group,
-            vehicleInfos: { $push: { registrationDate: '$registrationDate' } },
+            vehicleInfos: {
+              $push: {
+                registrationDate: '$registrationDate',
+                registrationExpirationDate: '$registrationExpirationDate',
+              },
+            },
           },
         },
         {
@@ -208,6 +224,7 @@ export class VehicleService {
       vehicleType?: string;
       startDate: string;
       endDate: string;
+      getNearExpired?: boolean;
     },
     req: any,
   ): Promise<any> {
@@ -223,11 +240,14 @@ export class VehicleService {
 
     const matchFilter = getFindFilterByDate(
       Flags.FILTER_BY_DATE_RANGE,
+      centerId,
       body.startDate,
       body.endDate,
-      centerId,
       body.vehicleType,
+      body.getNearExpired,
     );
+
+    // console.log(matchFilter);
 
     let filterType: string;
     let groupId: any;
@@ -344,7 +364,15 @@ export class VehicleService {
   }
 
   async getNearExpiredVehicles(req: any): Promise<Vehicle[]> {
-    const isCenter = req.data.centerId ? true : false;
+    let centerId: string | string[] = null;
+    if (req.data.depId) {
+      const centers = await this.registrationCenterService.findByDepId(
+        req.data._id,
+      );
+      centerId = centers.map((center) => center.centerId);
+    } else if (req.data.centerId) {
+      centerId = req.data.centerId;
+    }
     const currentDate = new Date();
     const nextMonth = new Date(
       currentDate.setMonth(currentDate.getMonth() + 1),
@@ -376,7 +404,10 @@ export class VehicleService {
               ],
             },
           },
-          isCenter ? { registrationCenterId: req.data.centerId } : {},
+          {
+            registrationCenterId:
+              typeof centerId === 'string' ? centerId : { $in: centerId },
+          },
         ],
       })
       .exec();
@@ -578,10 +609,11 @@ export class VehicleService {
 /**Get the find filter by date */
 function getFindFilterByDate(
   filter: string,
+  centerId: string | string[],
   startDate?: string,
   endDate?: string,
-  centerId?: string | string[],
   vehicleType?: string,
+  getNearExpired?: boolean,
 ) {
   let findFilter = {};
   if (filter === Flags.FILTER_BY_DATE_RANGE) {
@@ -607,13 +639,6 @@ function getFindFilterByDate(
             ],
           },
         },
-        centerId
-          ? {
-              registrationCenterId:
-                typeof centerId === 'string' ? centerId : { $in: centerId },
-            }
-          : {},
-        vehicleType ? { vehicleType: vehicleType } : {},
       ],
     };
   } else if (filter === Flags.FILTER_BY_WEEK) {
@@ -643,13 +668,6 @@ function getFindFilterByDate(
             ],
           },
         },
-        centerId
-          ? {
-              registrationCenterId:
-                typeof centerId === 'string' ? centerId : { $in: centerId },
-            }
-          : {},
-        vehicleType ? { vehicleType: vehicleType } : {},
       ],
     };
   } else if (filter === Flags.FILTER_BY_MONTH) {
@@ -679,13 +697,6 @@ function getFindFilterByDate(
             ],
           },
         },
-        centerId
-          ? {
-              registrationCenterId:
-                typeof centerId === 'string' ? centerId : { $in: centerId },
-            }
-          : {},
-        vehicleType ? { vehicleType: vehicleType } : {},
       ],
     };
   } else if (filter === Flags.FILTER_BY_YEAR) {
@@ -701,15 +712,54 @@ function getFindFilterByDate(
             ],
           },
         },
-        centerId
-          ? {
-              registrationCenterId:
-                typeof centerId === 'string' ? centerId : { $in: centerId },
-            }
-          : {},
-        vehicleType ? { vehicleType: vehicleType } : {},
       ],
     };
+  }
+
+  if (centerId) {
+    findFilter['$and'].push({
+      registrationCenterId:
+        typeof centerId === 'string' ? centerId : { $in: centerId },
+    });
+  }
+
+  if (vehicleType) {
+    findFilter['$and'].push({ vehicleType: vehicleType });
+  }
+
+  if (getNearExpired) {
+    const currentDate = new Date();
+    const nextMonth = new Date(
+      currentDate.setMonth(currentDate.getMonth() + 1),
+    );
+    findFilter['$and'].push(
+      ...[
+        {
+          $expr: {
+            $gte: [
+              {
+                $dateFromString: {
+                  dateString: '$registrationExpirationDate',
+                },
+              },
+              new Date(),
+            ],
+          },
+        },
+        {
+          $expr: {
+            $lte: [
+              {
+                $dateFromString: {
+                  dateString: '$registrationExpirationDate',
+                },
+              },
+              new Date(nextMonth),
+            ],
+          },
+        },
+      ],
+    );
   }
   return findFilter;
 }
