@@ -18,7 +18,6 @@ import { IVehicleOwner } from 'src/interfaces/vehicleOwner.interface';
 import { getJsDateFromExcel } from 'excel-date-to-js';
 import excelJsonChecker from 'src/utils/excelJsonChecker';
 import isIsoString from 'src/utils/isIsoString';
-import { RegistrationDepService } from 'src/registration-dep/registration-dep.service';
 
 @Injectable()
 export class VehicleService {
@@ -26,7 +25,6 @@ export class VehicleService {
     @InjectModel(Vehicle.name) private vehicleModel: Model<VehicleDocument>,
     private registrationCenterService: RegistrationCenterService,
     private vehicleOwnerService: VehicleOwnerService,
-    private registrationDepService: RegistrationDepService,
   ) {}
 
   async findAll(): Promise<Vehicle[]> {
@@ -373,43 +371,9 @@ export class VehicleService {
     } else if (req.data.centerId) {
       centerId = req.data.centerId;
     }
-    const currentDate = new Date();
-    const nextMonth = new Date(
-      currentDate.setMonth(currentDate.getMonth() + 1),
-    );
-    return this.vehicleModel
-      .find({
-        $and: [
-          {
-            $expr: {
-              $gte: [
-                {
-                  $dateFromString: {
-                    dateString: '$registrationExpirationDate',
-                  },
-                },
-                new Date(),
-              ],
-            },
-          },
-          {
-            $expr: {
-              $lte: [
-                {
-                  $dateFromString: {
-                    dateString: '$registrationExpirationDate',
-                  },
-                },
-                new Date(nextMonth),
-              ],
-            },
-          },
-          {
-            registrationCenterId:
-              typeof centerId === 'string' ? centerId : { $in: centerId },
-          },
-        ],
-      })
+
+    return await this.vehicleModel
+      .find(getFindFilterByDate(null, centerId, null, null, null, true))
       .exec();
   }
 
@@ -420,8 +384,8 @@ export class VehicleService {
     return newVehicle.save();
   }
 
-  async createMany(vehicles: IVehicle[]): Promise<void> {
-    const res = await this.vehicleModel.insertMany(vehicles);
+  async createMany(vehicles: IVehicle[]): Promise<Vehicle[]> {
+    return await this.vehicleModel.insertMany(vehicles);
   }
 
   async createVehicleFromCertificate(data) {
@@ -433,7 +397,7 @@ export class VehicleService {
     }
   }
 
-  async uploadVehicles(file: Express.Multer.File): Promise<void> {
+  async uploadVehicles(file: Express.Multer.File): Promise<Vehicle[]> {
     try {
       const vehicleJson = xlsxToJson(file.path);
       const remodeledVehicleJson = await this.remodelJsonData(vehicleJson);
@@ -615,105 +579,109 @@ function getFindFilterByDate(
   vehicleType?: string,
   getNearExpired?: boolean,
 ) {
-  let findFilter = {};
-  if (filter === Flags.FILTER_BY_DATE_RANGE) {
-    findFilter = {
-      $and: [
-        {
-          $expr: {
-            $gte: [
-              {
-                $dateFromString: { dateString: '$registrationDate' },
-              },
-              new Date(startDate),
-            ],
-          },
-        },
-        {
-          $expr: {
-            $lte: [
-              {
-                $dateFromString: { dateString: '$registrationDate' },
-              },
-              new Date(endDate),
-            ],
-          },
-        },
-      ],
-    };
-  } else if (filter === Flags.FILTER_BY_WEEK) {
-    findFilter = {
-      $and: [
-        {
-          $expr: {
-            $eq: [
-              {
-                $week: {
+  let findFilter = { $and: [] };
+  if (!getNearExpired) {
+    if (filter === Flags.FILTER_BY_DATE_RANGE) {
+      findFilter = {
+        $and: [
+          {
+            $expr: {
+              $gte: [
+                {
                   $dateFromString: { dateString: '$registrationDate' },
                 },
-              },
-              getCurrentWeekOfYear(),
-            ],
+                new Date(startDate),
+              ],
+            },
           },
-        },
-        {
-          $expr: {
-            $eq: [
-              {
-                $year: {
+          {
+            $expr: {
+              $lte: [
+                {
                   $dateFromString: { dateString: '$registrationDate' },
                 },
-              },
-              new Date().getFullYear(),
-            ],
+                new Date(endDate),
+              ],
+            },
           },
-        },
-      ],
-    };
-  } else if (filter === Flags.FILTER_BY_MONTH) {
-    findFilter = {
-      $and: [
-        {
-          $expr: {
-            $eq: [
-              {
-                $year: {
-                  $dateFromString: { dateString: '$registrationDate' },
+        ],
+      };
+    } else if (filter === Flags.FILTER_BY_WEEK) {
+      findFilter = {
+        $and: [
+          {
+            $expr: {
+              $eq: [
+                {
+                  $week: {
+                    $dateFromString: { dateString: '$registrationDate' },
+                  },
                 },
-              },
-              new Date().getFullYear(),
-            ],
+                getCurrentWeekOfYear(),
+              ],
+            },
           },
-        },
-        {
-          $expr: {
-            $eq: [
-              {
-                $month: {
-                  $dateFromString: { dateString: '$registrationDate' },
+          {
+            $expr: {
+              $eq: [
+                {
+                  $year: {
+                    $dateFromString: { dateString: '$registrationDate' },
+                  },
                 },
-              },
-              new Date().getMonth() + 1, // + 1 because $month and Date.getMonth() return different values,
-            ],
+                new Date().getFullYear(),
+              ],
+            },
           },
-        },
-      ],
-    };
-  } else if (filter === Flags.FILTER_BY_YEAR) {
-    findFilter = {
-      $and: [
-        {
-          $expr: {
-            $eq: [
-              {
-                $year: { $dateFromString: { dateString: '$registrationDate' } },
-              },
-              new Date().getFullYear(),
-            ],
+        ],
+      };
+    } else if (filter === Flags.FILTER_BY_MONTH) {
+      findFilter = {
+        $and: [
+          {
+            $expr: {
+              $eq: [
+                {
+                  $year: {
+                    $dateFromString: { dateString: '$registrationDate' },
+                  },
+                },
+                new Date().getFullYear(),
+              ],
+            },
           },
-        },
-      ],
-    };
+          {
+            $expr: {
+              $eq: [
+                {
+                  $month: {
+                    $dateFromString: { dateString: '$registrationDate' },
+                  },
+                },
+                new Date().getMonth() + 1, // + 1 because $month and Date.getMonth() return different values,
+              ],
+            },
+          },
+        ],
+      };
+    } else if (filter === Flags.FILTER_BY_YEAR) {
+      findFilter = {
+        $and: [
+          {
+            $expr: {
+              $eq: [
+                {
+                  $year: {
+                    $dateFromString: { dateString: '$registrationDate' },
+                  },
+                },
+                new Date().getFullYear(),
+              ],
+            },
+          },
+        ],
+      };
+    }
   }
 
   if (centerId) {
