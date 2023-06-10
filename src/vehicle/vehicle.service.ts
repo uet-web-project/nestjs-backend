@@ -286,7 +286,9 @@ export class VehicleService {
         filterType = Flags.FILTER_BY_DAY;
         groupId = {
           $dateFromString: {
-            dateString: '$registrationDate',
+            dateString: `$registration${
+              body.getNearExpired ? 'Expiration' : ''
+            }Date`,
           },
         };
       } else {
@@ -296,14 +298,18 @@ export class VehicleService {
             isoWeekYear: {
               $year: {
                 $dateFromString: {
-                  dateString: '$registrationDate',
+                  dateString: `$registration${
+                    body.getNearExpired ? 'Expiration' : ''
+                  }Date`,
                 },
               },
             },
             isoWeek: {
               $week: {
                 $dateFromString: {
-                  dateString: '$registrationDate',
+                  dateString: `$registration${
+                    body.getNearExpired ? 'Expiration' : ''
+                  }Date`,
                 },
               },
             },
@@ -317,14 +323,18 @@ export class VehicleService {
           year: {
             $year: {
               $dateFromString: {
-                dateString: '$registrationDate',
+                dateString: `$registration${
+                  body.getNearExpired ? 'Expiration' : ''
+                }Date`,
               },
             },
           },
           month: {
             $month: {
               $dateFromString: {
-                dateString: '$registrationDate',
+                dateString: `$registration${
+                  body.getNearExpired ? 'Expiration' : ''
+                }Date`,
               },
             },
           },
