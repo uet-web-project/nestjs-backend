@@ -1,4 +1,4 @@
-import { Controller, Get } from '@nestjs/common';
+import { Controller, Get, Res } from '@nestjs/common';
 import { AppService } from './app.service';
 
 @Controller()
@@ -8,5 +8,14 @@ export class AppController {
   @Get()
   getHello(): string {
     return this.appService.getHello();
+  }
+
+  @Get('provinces')
+  async getProvinces(@Res() res): Promise<void> {
+    try {
+      res.status(200).json(await this.appService.getProvinces());
+    } catch (err) {
+      res.status(err.status || 404).json('Error getting provinces');
+    }
   }
 }

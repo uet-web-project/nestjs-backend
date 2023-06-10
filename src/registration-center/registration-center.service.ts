@@ -10,6 +10,7 @@ import { RegistrationDepService } from '../registration-dep/registration-dep.ser
 import { faker } from '@faker-js/faker';
 import { ObjectId } from 'bson';
 import * as bcrypt from 'bcrypt';
+import axiosInstance from 'src/utils/axios';
 
 @Injectable()
 export class RegistrationCenterService {
@@ -95,7 +96,18 @@ export class RegistrationCenterService {
     const deps: any[] = await this.registrationDepService.findAll();
     const depsIds: string[] = deps.map((dep) => dep._id.toString());
 
+    const provinces = (await axiosInstance.get('?depth=2')).data;
+
     for (let i = 0; i < 200; i++) {
+      const randomProvinceIndex = faker.datatype.number({
+        min: 0,
+        max: provinces.length - 1,
+      });
+
+      const randomDistrictIndex = faker.datatype.number({
+        min: 0,
+        max: provinces[randomProvinceIndex].districts.length - 1,
+      });
       // get a random dep ID for registrationDep field
       const randomIndex = Math.floor(Math.random() * depsIds.length);
       fakeData.push({
@@ -105,6 +117,9 @@ export class RegistrationCenterService {
           .toString(),
         password: await bcrypt.hash(faker.internet.password(8, true), 10),
         name: faker.company.catchPhrase(),
+        provinceCode: provinces[randomProvinceIndex].code,
+        districtCode:
+          provinces[randomProvinceIndex].districts[randomDistrictIndex].code,
         location: faker.address.city(),
         phoneNumber: faker.phone.number('09########'),
         registrationDep: depsIds[randomIndex],
