@@ -7,6 +7,7 @@ import {
 import { RegistrationCenterController } from './registration-center.controller';
 import { RegistrationCenterService } from './registration-center.service';
 import { RegistrationDepModule } from '../registration-dep/registration-dep.module';
+import { ProvinceModule } from 'src/province/province.module';
 
 @Module({
   imports: [
@@ -14,6 +15,7 @@ import { RegistrationDepModule } from '../registration-dep/registration-dep.modu
       { name: RegistrationCenter.name, schema: RegistrationCenterSchema },
     ]),
     RegistrationDepModule,
+    ProvinceModule,
   ],
   providers: [RegistrationCenterService],
   controllers: [RegistrationCenterController],

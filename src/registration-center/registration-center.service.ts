@@ -10,7 +10,8 @@ import { RegistrationDepService } from '../registration-dep/registration-dep.ser
 import { faker } from '@faker-js/faker';
 import { ObjectId } from 'bson';
 import * as bcrypt from 'bcrypt';
-import axiosInstance from 'src/utils/axios';
+import { ProvinceService } from 'src/province/province.service';
+import getRegistrationCenterFullAddress from 'src/utils/getRegistrationCenterFullAddress';
 
 @Injectable()
 export class RegistrationCenterService {
@@ -18,6 +19,7 @@ export class RegistrationCenterService {
     @InjectModel(RegistrationCenter.name)
     private registrationCenterModel: Model<RegistrationCenterDocument>,
     private registrationDepService: RegistrationDepService,
+    private provinceService: ProvinceService,
   ) {}
 
   async findAll(): Promise<RegistrationCenter[]> {
@@ -78,9 +80,23 @@ export class RegistrationCenterService {
     registrationCenter = {
       ...registrationCenter,
       password: await bcrypt.hash(registrationCenter.password, salt),
+      fullAdress: getRegistrationCenterFullAddress(
+        registrationCenter,
+        await this.provinceService.getProvinces(),
+      ),
     };
     const createdCenter = new this.registrationCenterModel(registrationCenter);
     return createdCenter.save();
+  }
+
+  // development only: update all centers' full address
+  async updateAllCenterFullAddress(): Promise<void> {
+    const centers = await this.registrationCenterModel.find().exec();
+    const provinces = await this.provinceService.getProvinces();
+    centers.map(async (center) => {
+      center.fullAdress = getRegistrationCenterFullAddress(center, provinces);
+      await center.save();
+    });
   }
 
   async deleteById(id: string): Promise<void> {
@@ -96,7 +112,7 @@ export class RegistrationCenterService {
     const deps: any[] = await this.registrationDepService.findAll();
     const depsIds: string[] = deps.map((dep) => dep._id.toString());
 
-    const provinces = (await axiosInstance.get('?depth=2')).data;
+    const provinces = await this.provinceService.getProvinces();
 
     for (let i = 0; i < 200; i++) {
       const randomProvinceIndex = faker.datatype.number({

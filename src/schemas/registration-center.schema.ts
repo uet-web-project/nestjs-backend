@@ -24,6 +24,9 @@ export class RegistrationCenter {
   @Prop({ required: true })
   location: string;
 
+  @Prop()
+  fullAdress: string;
+
   @Prop({ required: true })
   phoneNumber: string;
 

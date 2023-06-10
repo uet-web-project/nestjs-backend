@@ -20,6 +20,7 @@ import excelJsonChecker from 'src/utils/excelJsonChecker';
 import isIsoString from 'src/utils/isIsoString';
 import { RegistrationCenter } from 'src/schemas/registration-center.schema';
 import { ProvinceService } from 'src/province/province.service';
+import getRegistrationCenterFullAddress from 'src/utils/getRegistrationCenterFullAddress';
 
 @Injectable()
 export class VehicleService {
@@ -613,7 +614,7 @@ export class VehicleService {
           ? data.registrationDate
           : new Date(getJsDateFromExcel(data.registrationDate)).toISOString(),
         registrationCenterId: data.registrationCenterId.toString(),
-        registrationLocation: getRegistrationCenterFullAdress(
+        registrationLocation: getRegistrationCenterFullAddress(
           currentCenter,
           provinces,
         ),
@@ -886,17 +887,4 @@ function getVehicleRegExpirationDate(vehicle: IVehicle): string {
   }
 
   return expirationDate;
-}
-
-function getRegistrationCenterFullAdress(
-  registrationCenter: RegistrationCenter,
-  provinceInfos: any,
-): string {
-  const province = provinceInfos.find(
-    (province) => province.code === registrationCenter.provinceCode,
-  );
-  const district = province.districts.find(
-    (district) => district.code === registrationCenter.districtCode,
-  );
-  return `${province.name}, ${district.name}, ${registrationCenter.location}`;
 }
