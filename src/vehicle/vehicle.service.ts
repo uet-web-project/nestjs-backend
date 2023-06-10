@@ -19,7 +19,7 @@ import { getJsDateFromExcel } from 'excel-date-to-js';
 import excelJsonChecker from 'src/utils/excelJsonChecker';
 import isIsoString from 'src/utils/isIsoString';
 import { RegistrationCenter } from 'src/schemas/registration-center.schema';
-import axiosInstance from 'src/utils/axios';
+import { ProvinceService } from 'src/province/province.service';
 
 @Injectable()
 export class VehicleService {
@@ -27,6 +27,7 @@ export class VehicleService {
     @InjectModel(Vehicle.name) private vehicleModel: Model<VehicleDocument>,
     private registrationCenterService: RegistrationCenterService,
     private vehicleOwnerService: VehicleOwnerService,
+    private provinceService: ProvinceService,
   ) {}
 
   async findAll(): Promise<Vehicle[]> {
@@ -225,7 +226,6 @@ export class VehicleService {
               $push: {
                 registrationDate: '$registrationDate',
                 registrationExpirationDate: '$registrationExpirationDate',
-                registrationCenterName: '$registrationInformation',
               },
             },
           },
@@ -480,7 +480,7 @@ export class VehicleService {
     const registrationCenters: RegistrationCenter[] =
       await this.registrationCenterService.findAll();
     const owners: any[] = await this.vehicleOwnerService.findAll();
-    const provinces = (await axiosInstance.get('?depth=2')).data;
+    const provinces = await this.provinceService.getProvinces();
 
     const registrationCentersIds: string[] = registrationCenters.map(
       (center) => center.centerId,
@@ -560,6 +560,8 @@ export class VehicleService {
   async remodelJsonData(json: any[]): Promise<IVehicle[]> {
     const existingVehicles = await this.findAll();
     const ownerCids = await this.vehicleOwnerService.getAllOwnerCids();
+    const allCenters = await this.registrationCenterService.findAll();
+    const provinces = await this.provinceService.getProvinces();
     const newOwners: IVehicleOwner[] = [];
     const newVehicles: IVehicle[] = [];
     const existingVehiclesLicensePlates: string[] = existingVehicles.map(
@@ -590,6 +592,15 @@ export class VehicleService {
         existingVehiclesVins.push(data.vin);
       }
 
+      const currentCenter: RegistrationCenter | undefined = allCenters.find(
+        (center) => center.centerId === data.registrationCenterId,
+      );
+      if (!currentCenter) {
+        throw new BadRequestException(
+          `Registration center ${data.registrationCenterId} does not exist.`,
+        );
+      }
+
       const newVehicle: IVehicle = {
         licensePlate: data.licensePlate,
         vehicleType: data.vehicleType,
@@ -602,7 +613,10 @@ export class VehicleService {
           ? data.registrationDate
           : new Date(getJsDateFromExcel(data.registrationDate)).toISOString(),
         registrationCenterId: data.registrationCenterId.toString(),
-        registrationLocation: data.registrationLocation,
+        registrationLocation: getRegistrationCenterFullAdress(
+          currentCenter,
+          provinces,
+        ),
         purpose: data.purpose,
         width: data.width,
         length: data.length,
@@ -872,4 +886,17 @@ function getVehicleRegExpirationDate(vehicle: IVehicle): string {
   }
 
   return expirationDate;
+}
+
+function getRegistrationCenterFullAdress(
+  registrationCenter: RegistrationCenter,
+  provinceInfos: any,
+): string {
+  const province = provinceInfos.find(
+    (province) => province.code === registrationCenter.provinceCode,
+  );
+  const district = province.districts.find(
+    (district) => district.code === registrationCenter.districtCode,
+  );
+  return `${province.name}, ${district.name}, ${registrationCenter.location}`;
 }
