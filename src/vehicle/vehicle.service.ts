@@ -411,6 +411,8 @@ export class VehicleService {
 
   async getNearExpiredVehicles(req: any): Promise<Vehicle[]> {
     let centerId: string | string[] = null;
+    console.log(req.data);
+
     if (req.data.depId) {
       const centers = await this.registrationCenterService.findByDepId(
         req.data._id,
@@ -604,7 +606,7 @@ export class VehicleService {
       }
 
       const currentCenter: RegistrationCenter | undefined = allCenters.find(
-        (center) => center.centerId === data.registrationCenterId,
+        (center) => center.centerId === data.registrationCenterId.toString(),
       );
       if (!currentCenter) {
         throw new BadRequestException(
