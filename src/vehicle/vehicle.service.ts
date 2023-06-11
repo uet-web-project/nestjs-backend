@@ -411,7 +411,6 @@ export class VehicleService {
 
   async getNearExpiredVehicles(req: any): Promise<Vehicle[]> {
     let centerId: string | string[] = null;
-    console.log(req.data);
 
     if (req.data.depId) {
       const centers = await this.registrationCenterService.findByDepId(
