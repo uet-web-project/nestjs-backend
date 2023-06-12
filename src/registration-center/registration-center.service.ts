@@ -5,7 +5,10 @@ import {
   RegistrationCenter,
   RegistrationCenterDocument,
 } from 'src/schemas/registration-center.schema';
-import { IRegistrationCenter } from '../interfaces/registrationCenter.interface';
+import {
+  IRegistrationCenter,
+  isIRegistrationCenter,
+} from '../interfaces/registrationCenter.interface';
 import { RegistrationDepService } from '../registration-dep/registration-dep.service';
 import { faker } from '@faker-js/faker';
 import { ObjectId } from 'bson';
@@ -68,6 +71,9 @@ export class RegistrationCenterService {
   async create(
     registrationCenter: IRegistrationCenter,
   ): Promise<RegistrationCenter> {
+    if (!isIRegistrationCenter(registrationCenter)) {
+      throw new Error('Invalid registration center data');
+    }
     const centerIds = (await this.registrationCenterModel.find().exec()).map(
       (center) => center.centerId.toString(),
     );

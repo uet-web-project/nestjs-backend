@@ -5,7 +5,10 @@ import {
   VehicleOwnerDocument,
 } from '../schemas/vehicle-owner.schema';
 import { Model } from 'mongoose';
-import { IVehicleOwner } from '../interfaces/vehicleOwner.interface';
+import {
+  IVehicleOwner,
+  isIVehicleOwner,
+} from '../interfaces/vehicleOwner.interface';
 import { ObjectId } from 'bson';
 import { faker } from '@faker-js/faker';
 
@@ -38,6 +41,9 @@ export class VehicleOwnerService {
   }
 
   async create(owner: IVehicleOwner): Promise<VehicleOwner> {
+    if (!isIVehicleOwner(owner)) {
+      throw new Error('Invalid vehicle owner data');
+    }
     const newOwner = new this.vehicleOwnerModel(owner);
     return newOwner.save();
   }

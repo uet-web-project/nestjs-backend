@@ -5,7 +5,10 @@ import {
   RegistrationDep,
   RegistrationDepDocument,
 } from '../schemas/registration-dep.schema';
-import { IRegistrationDep } from '../interfaces/registrationDep.interface';
+import {
+  IRegistrationDep,
+  isIRegistrationDep,
+} from '../interfaces/registrationDep.interface';
 
 import { faker } from '@faker-js/faker';
 import { ObjectId } from 'bson';
@@ -62,6 +65,9 @@ export class RegistrationDepService {
   }
 
   async create(registrationDep: IRegistrationDep): Promise<RegistrationDep> {
+    if (!isIRegistrationDep(registrationDep)) {
+      throw new Error('Invalid registration department data');
+    }
     const depIds = (await this.registrationDepModel.find().exec()).map((dep) =>
       dep._id.toString(),
     );

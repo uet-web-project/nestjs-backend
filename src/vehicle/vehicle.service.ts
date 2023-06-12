@@ -8,7 +8,7 @@ import { Model } from 'mongoose';
 import { Vehicle, VehicleDocument } from '../schemas/vehicle.schema';
 import { RegistrationCenterService } from '../registration-center/registration-center.service';
 import { VehicleOwnerService } from '../vehicle-owner/vehicle-owner.service';
-import { IVehicle } from '../interfaces/vehicle.interface';
+import { IVehicle, isIVehicle } from '../interfaces/vehicle.interface';
 import { ObjectId } from 'bson';
 import { faker } from '@faker-js/faker';
 import { Flags } from 'src/constants/Flags';
@@ -473,8 +473,26 @@ export class VehicleService {
   }
 
   async create(vehicle: IVehicle): Promise<Vehicle> {
+    if (!isIVehicle(vehicle)) {
+      throw new BadRequestException('Invalid vehicle data');
+    }
+    if (!checkLicensePlateAndRegNumValidity(vehicle.licensePlate, '')[0]) {
+      throw new BadRequestException(
+        'Invalid license plate. Please check the license plate and try again.',
+      );
+    }
+    if (
+      !checkLicensePlateAndRegNumValidity('', vehicle.registrationNumber)[1]
+    ) {
+      throw new BadRequestException(
+        'Invalid registration number. Please check the license plate and try again.',
+      );
+    }
+    const ownerCids = await this.vehicleOwnerService.getAllOwnerCids();
+    if (!ownerCids.includes(vehicle.vehicleOwnerCid)) {
+      throw new BadRequestException('Owner CID does not exist');
+    }
     vehicle.registrationExpirationDate = getVehicleRegExpirationDate(vehicle);
-
     const newVehicle = new this.vehicleModel(vehicle);
     return newVehicle.save();
   }
@@ -620,12 +638,18 @@ export class VehicleService {
           'Invalid excel file. Please check the file and try again.',
         );
       }
+
       // check for existing license plates and vins
       if (existingVehiclesLicensePlates.includes(data.licensePlate)) {
         throw new BadRequestException(
           `License plate ${data.licensePlate} already exists.`,
         );
       } else {
+        if (!checkLicensePlateAndRegNumValidity(data.licensePlate, '')[0]) {
+          throw new BadRequestException(
+            `Invalid license plate ${data.licensePlate}. Please check the license plate and try again.`,
+          );
+        }
         existingVehiclesLicensePlates.push(data.licensePlate);
       }
       if (
@@ -635,6 +659,13 @@ export class VehicleService {
           `Registration number ${data.registrationNumber} already exists.`,
         );
       } else {
+        if (
+          !checkLicensePlateAndRegNumValidity('', data.registrationNumber)[1]
+        ) {
+          throw new BadRequestException(
+            `Invalid registration number ${data.registrationNumber}. Please check the license plate and try again.`,
+          );
+        }
         existingVehiclesRegistrationNumbers.push(data.registrationNumber);
       }
       if (existingVehiclesVins.includes(data.vin)) {
@@ -947,4 +978,12 @@ function getVehicleRegExpirationDate(vehicle: IVehicle): string {
   }
 
   return expirationDate;
+}
+
+function checkLicensePlateAndRegNumValidity(
+  licensePlate: string,
+  regNum: string,
+): boolean[] {
+  const licensePlateRegex = new RegExp(/[0-9]{2}[A-Z]{1}-[0-9]{4,5}/);
+  return [licensePlateRegex.test(licensePlate), licensePlateRegex.test(regNum)];
 }
