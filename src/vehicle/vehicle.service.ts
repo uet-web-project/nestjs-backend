@@ -526,7 +526,7 @@ export class VehicleService {
     );
     const ownersIds: string[] = owners.map((owner) => owner.cid);
 
-    for (let i = 0; i < 100; i++) {
+    for (let i = 0; i < 1000; i++) {
       const randomCenterIndex = Math.floor(
         Math.random() * registrationCentersIds.length,
       );
@@ -539,17 +539,17 @@ export class VehicleService {
           district.code === registrationCenters[randomCenterIndex].districtCode,
       );
 
-      const vehicleRegLocation = `${vehicleRegProvince.name}, ${vehicleRegDistrict.name}, ${registrationCenters[randomCenterIndex].location}`;
-      // const vehicleRegLocation = `${provinces[0].name}, ${provinces[0].districts[2].name}, Dong Da`;
+      // const vehicleRegLocation = `${vehicleRegProvince.name}, ${vehicleRegDistrict.name}, ${registrationCenters[randomCenterIndex].location}`;
+      const vehicleRegLocation = `${provinces[0].name}, ${provinces[0].districts[2].name}, Dong Da`;
 
       const randomOwnerIndex = Math.floor(Math.random() * ownersIds.length);
       const randomVehicleTypeIndex = Math.floor(Math.random() * 3);
       const randomLicensePlate = `${faker.datatype.number({
         min: 15,
-        max: 35,
+        max: 55,
       })}E-${faker.random.numeric(5)}`;
       const randomVehicleVersion = faker.date
-        .between('2020-01-01', '2023-01-01')
+        .between('2020-06-01', '2022-01-01')
         .getFullYear()
         .toString();
       const fakeVehicle: IVehicle = {
@@ -557,7 +557,7 @@ export class VehicleService {
         vin: faker.vehicle.vin(),
         registrationNumber: randomLicensePlate,
         registrationDate: faker.date
-          .between(`${randomVehicleVersion}-01-01`, new Date().toISOString())
+          .between(`${randomVehicleVersion}-01-01`, '2022-12-30')
           .toISOString(),
         // registrationDate: faker.date
         //   .between(
@@ -580,8 +580,8 @@ export class VehicleService {
         emission: faker.datatype.number({ min: 4, max: 7 }),
         mileage: faker.datatype.number({ min: 100, max: 100000 }),
         vehicleOwnerCid: ownersIds[randomOwnerIndex],
-        registrationCenterId: registrationCentersIds[randomCenterIndex],
-        // registrationCenterId: '654321',
+        // registrationCenterId: registrationCentersIds[randomCenterIndex],
+        registrationCenterId: '654321',
       };
       fakeVehicle.registrationExpirationDate =
         getVehicleRegExpirationDate(fakeVehicle);
@@ -606,6 +606,9 @@ export class VehicleService {
     const existingVehiclesLicensePlates: string[] = existingVehicles.map(
       (vehicle) => vehicle.licensePlate,
     );
+    const existingVehiclesRegistrationNumbers: string[] = existingVehicles.map(
+      (vehicle) => vehicle.registrationNumber,
+    );
     const existingVehiclesVins: string[] = existingVehicles.map(
       (vehicle) => vehicle.vin,
     );
@@ -624,6 +627,15 @@ export class VehicleService {
         );
       } else {
         existingVehiclesLicensePlates.push(data.licensePlate);
+      }
+      if (
+        existingVehiclesRegistrationNumbers.includes(data.registrationNumber)
+      ) {
+        throw new BadRequestException(
+          `Registration number ${data.registrationNumber} already exists.`,
+        );
+      } else {
+        existingVehiclesRegistrationNumbers.push(data.registrationNumber);
       }
       if (existingVehiclesVins.includes(data.vin)) {
         throw new BadRequestException(`VIN ${data.vin} already exists.`);

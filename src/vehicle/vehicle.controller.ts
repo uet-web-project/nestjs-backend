@@ -194,6 +194,7 @@ export class VehicleController {
     try {
       res.status(200).json(await this.vehicleService.uploadVehicles(file));
     } catch (err) {
+      // console.log(err);
       res.status(err.status || 404).json(err);
     }
   }
