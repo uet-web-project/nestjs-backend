@@ -96,6 +96,21 @@ export class VehicleController {
     }
   }
 
+  @Post('get-vehicle-by-filter')
+  async getVehicleByFilter(
+    @Body() body,
+    @Req() req,
+    @Res() res,
+  ): Promise<void> {
+    try {
+      res
+        .status(200)
+        .json(await this.vehicleService.getVehicleByFilter(body, req));
+    } catch (error) {
+      res.status(error.status || 404).json(error);
+    }
+  }
+
   @Post('group-by-vehicle-type')
   async groupByVehicleType(
     @Body() body,

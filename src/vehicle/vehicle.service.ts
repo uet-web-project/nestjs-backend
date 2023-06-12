@@ -68,6 +68,53 @@ export class VehicleService {
     return this.vehicleModel.find({ vehicleType: vehicleType }).exec();
   }
 
+  async getVehicleByFilter(
+    body: {
+      vehicleType?: string;
+      startDate: string;
+      endDate: string;
+      getNearExpired?: boolean;
+      provinceCode?: number;
+      districtCode?: number;
+    },
+    req: any,
+  ): Promise<Vehicle[]> {
+    let centerId: string | string[] = null;
+    if (req.data.depId) {
+      const centers = await this.registrationCenterService.findByDepId(
+        req.data._id,
+      );
+      centerId = centers.map((center) => center.centerId);
+    } else if (req.data.centerId) {
+      centerId = req.data.centerId;
+    }
+
+    const matchFilter = getFindFilterByDate(
+      Flags.FILTER_BY_DATE_RANGE,
+      centerId,
+      body.startDate,
+      body.endDate,
+      body.vehicleType,
+      body.getNearExpired,
+      body.provinceCode,
+      body.districtCode,
+    );
+
+    return await this.vehicleModel
+      .aggregate([
+        {
+          $lookup: getLookupQuery(),
+        },
+        {
+          $match: matchFilter,
+        },
+        {
+          $unset: 'registrationInformation',
+        },
+      ])
+      .exec();
+  }
+
   async getRegisteredVehiclesCount(filter: string, req: any): Promise<any> {
     let centerId: string | string[] = null;
     if (req.data.depId) {
@@ -84,12 +131,7 @@ export class VehicleService {
     const vehiclesRegisteredWithinFilter: Vehicle[] = await this.vehicleModel
       .aggregate([
         {
-          $lookup: {
-            from: 'registrationcenters',
-            localField: 'registrationCenterId',
-            foreignField: 'centerId',
-            as: 'registrationInformation',
-          },
+          $lookup: getLookupQuery(),
         },
         { $match: matchFilter },
       ])
@@ -209,12 +251,7 @@ export class VehicleService {
     return this.vehicleModel
       .aggregate([
         {
-          $lookup: {
-            from: 'registrationcenters',
-            localField: 'registrationCenterId',
-            foreignField: 'centerId',
-            as: 'registrationInformation',
-          },
+          $lookup: getLookupQuery(),
         },
         {
           $match: matchFilter,
@@ -350,12 +387,7 @@ export class VehicleService {
     return this.vehicleModel
       .aggregate([
         {
-          $lookup: {
-            from: 'registrationcenters',
-            localField: 'registrationCenterId',
-            foreignField: 'centerId',
-            as: 'registrationInformation',
-          },
+          $lookup: getLookupQuery(),
         },
         { $match: matchFilter },
         { $group: groupAggregation },
@@ -433,12 +465,7 @@ export class VehicleService {
     return await this.vehicleModel
       .aggregate([
         {
-          $lookup: {
-            from: 'registrationcenters',
-            localField: 'registrationCenterId',
-            foreignField: 'centerId',
-            as: 'registrationInformation',
-          },
+          $lookup: getLookupQuery(),
         },
         { $match: matchFilter },
       ])
@@ -840,6 +867,16 @@ function getFindFilterByDate(
   }
 
   return findFilter;
+}
+
+/**Returns the query for lookup in mongoDB aggregation pipeline (for joining vahicles and registrationcenters entities) */
+function getLookupQuery() {
+  return {
+    from: 'registrationcenters',
+    localField: 'registrationCenterId',
+    foreignField: 'centerId',
+    as: 'registrationInformation',
+  };
 }
 
 function getVehicleRegExpirationDate(vehicle: IVehicle): string {
