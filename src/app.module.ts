@@ -8,6 +8,7 @@ import { VehicleModule } from './vehicle/vehicle.module';
 import { VehicleOwnerModule } from './vehicle-owner/vehicle-owner.module';
 import { AuthModule } from './auth/auth.module';
 import { ConfigModule, ConfigService } from '@nestjs/config';
+import { ProvinceModule } from './province/province.module';
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
         uri: config.get<string>('DB_PATH'),
       }),
     }),
+    ProvinceModule,
     RegistrationCenterModule,
     RegistrationDepModule,
     VehicleModule,

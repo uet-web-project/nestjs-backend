@@ -8,6 +8,7 @@ import {
   Param,
   UseGuards,
   Req,
+  Patch,
 } from '@nestjs/common';
 import { RegistrationCenterService } from './registration-center.service';
 import { AuthGuard } from '../auth/auth.guard';
@@ -68,6 +69,19 @@ export class RegistrationCenterController {
   async create(@Body() body, @Res() res): Promise<void> {
     try {
       res.status(200).json(await this.registrationCenterService.create(body));
+    } catch (error) {
+      res.status(error.status || 404).json(error);
+    }
+  }
+
+  @Patch('update-full-address')
+  async updateFullAddress(@Res() res): Promise<void> {
+    try {
+      res
+        .status(200)
+        .json(
+          await this.registrationCenterService.updateAllCenterFullAddress(),
+        );
     } catch (error) {
       res.status(error.status || 404).json(error);
     }

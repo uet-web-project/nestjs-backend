@@ -9,7 +9,6 @@ function excelJsonChecker(data) {
     !data.registrationNumber ||
     !data.registrationDate ||
     !data.registrationCenterId ||
-    !data.registrationLocation ||
     !data.purpose ||
     !data.width ||
     !data.length ||

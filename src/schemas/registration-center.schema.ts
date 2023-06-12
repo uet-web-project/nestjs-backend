@@ -16,7 +16,16 @@ export class RegistrationCenter {
   name: string;
 
   @Prop({ required: true })
+  provinceCode: number;
+
+  @Prop({ required: true })
+  districtCode: number;
+
+  @Prop({ required: true })
   location: string;
+
+  @Prop()
+  fullAdress: string;
 
   @Prop({ required: true })
   phoneNumber: string;

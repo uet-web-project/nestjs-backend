@@ -5,11 +5,16 @@ import {
   RegistrationCenter,
   RegistrationCenterDocument,
 } from 'src/schemas/registration-center.schema';
-import { IRegistrationCenter } from '../interfaces/registrationCenter.interface';
+import {
+  IRegistrationCenter,
+  isIRegistrationCenter,
+} from '../interfaces/registrationCenter.interface';
 import { RegistrationDepService } from '../registration-dep/registration-dep.service';
 import { faker } from '@faker-js/faker';
 import { ObjectId } from 'bson';
 import * as bcrypt from 'bcrypt';
+import { ProvinceService } from 'src/province/province.service';
+import getRegistrationCenterFullAddress from 'src/utils/getRegistrationCenterFullAddress';
 
 @Injectable()
 export class RegistrationCenterService {
@@ -17,6 +22,7 @@ export class RegistrationCenterService {
     @InjectModel(RegistrationCenter.name)
     private registrationCenterModel: Model<RegistrationCenterDocument>,
     private registrationDepService: RegistrationDepService,
+    private provinceService: ProvinceService,
   ) {}
 
   async findAll(): Promise<RegistrationCenter[]> {
@@ -65,6 +71,9 @@ export class RegistrationCenterService {
   async create(
     registrationCenter: IRegistrationCenter,
   ): Promise<RegistrationCenter> {
+    if (!isIRegistrationCenter(registrationCenter)) {
+      throw new Error('Invalid registration center data');
+    }
     const centerIds = (await this.registrationCenterModel.find().exec()).map(
       (center) => center.centerId.toString(),
     );
@@ -77,9 +86,23 @@ export class RegistrationCenterService {
     registrationCenter = {
       ...registrationCenter,
       password: await bcrypt.hash(registrationCenter.password, salt),
+      fullAdress: getRegistrationCenterFullAddress(
+        registrationCenter,
+        await this.provinceService.getProvinces(),
+      ),
     };
     const createdCenter = new this.registrationCenterModel(registrationCenter);
     return createdCenter.save();
+  }
+
+  // development only: update all centers' full address
+  async updateAllCenterFullAddress(): Promise<void> {
+    const centers = await this.registrationCenterModel.find().exec();
+    const provinces = await this.provinceService.getProvinces();
+    centers.map(async (center) => {
+      center.fullAdress = getRegistrationCenterFullAddress(center, provinces);
+      await center.save();
+    });
   }
 
   async deleteById(id: string): Promise<void> {
@@ -95,7 +118,18 @@ export class RegistrationCenterService {
     const deps: any[] = await this.registrationDepService.findAll();
     const depsIds: string[] = deps.map((dep) => dep._id.toString());
 
+    const provinces = await this.provinceService.getProvinces();
+
     for (let i = 0; i < 200; i++) {
+      const randomProvinceIndex = faker.datatype.number({
+        min: 0,
+        max: provinces.length - 1,
+      });
+
+      const randomDistrictIndex = faker.datatype.number({
+        min: 0,
+        max: provinces[randomProvinceIndex].districts.length - 1,
+      });
       // get a random dep ID for registrationDep field
       const randomIndex = Math.floor(Math.random() * depsIds.length);
       fakeData.push({
@@ -105,6 +139,9 @@ export class RegistrationCenterService {
           .toString(),
         password: await bcrypt.hash(faker.internet.password(8, true), 10),
         name: faker.company.catchPhrase(),
+        provinceCode: provinces[randomProvinceIndex].code,
+        districtCode:
+          provinces[randomProvinceIndex].districts[randomDistrictIndex].code,
         location: faker.address.city(),
         phoneNumber: faker.phone.number('09########'),
         registrationDep: depsIds[randomIndex],

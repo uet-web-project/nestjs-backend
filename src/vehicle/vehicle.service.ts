@@ -8,7 +8,7 @@ import { Model } from 'mongoose';
 import { Vehicle, VehicleDocument } from '../schemas/vehicle.schema';
 import { RegistrationCenterService } from '../registration-center/registration-center.service';
 import { VehicleOwnerService } from '../vehicle-owner/vehicle-owner.service';
-import { IVehicle } from '../interfaces/vehicle.interface';
+import { IVehicle, isIVehicle } from '../interfaces/vehicle.interface';
 import { ObjectId } from 'bson';
 import { faker } from '@faker-js/faker';
 import { Flags } from 'src/constants/Flags';
@@ -18,7 +18,9 @@ import { IVehicleOwner } from 'src/interfaces/vehicleOwner.interface';
 import { getJsDateFromExcel } from 'excel-date-to-js';
 import excelJsonChecker from 'src/utils/excelJsonChecker';
 import isIsoString from 'src/utils/isIsoString';
-import { RegistrationDepService } from 'src/registration-dep/registration-dep.service';
+import { RegistrationCenter } from 'src/schemas/registration-center.schema';
+import { ProvinceService } from 'src/province/province.service';
+import getRegistrationCenterFullAddress from 'src/utils/getRegistrationCenterFullAddress';
 
 @Injectable()
 export class VehicleService {
@@ -26,7 +28,7 @@ export class VehicleService {
     @InjectModel(Vehicle.name) private vehicleModel: Model<VehicleDocument>,
     private registrationCenterService: RegistrationCenterService,
     private vehicleOwnerService: VehicleOwnerService,
-    private registrationDepService: RegistrationDepService,
+    private provinceService: ProvinceService,
   ) {}
 
   async findAll(): Promise<Vehicle[]> {
@@ -66,6 +68,53 @@ export class VehicleService {
     return this.vehicleModel.find({ vehicleType: vehicleType }).exec();
   }
 
+  async getVehicleByFilter(
+    body: {
+      vehicleType?: string;
+      startDate: string;
+      endDate: string;
+      getNearExpired?: boolean;
+      provinceCode?: number;
+      districtCode?: number;
+    },
+    req: any,
+  ): Promise<Vehicle[]> {
+    let centerId: string | string[] = null;
+    if (req.data.depId) {
+      const centers = await this.registrationCenterService.findByDepId(
+        req.data._id,
+      );
+      centerId = centers.map((center) => center.centerId);
+    } else if (req.data.centerId) {
+      centerId = req.data.centerId;
+    }
+
+    const matchFilter = getFindFilterByDate(
+      Flags.FILTER_BY_DATE_RANGE,
+      centerId,
+      body.startDate,
+      body.endDate,
+      body.vehicleType,
+      body.getNearExpired,
+      body.provinceCode,
+      body.districtCode,
+    );
+
+    return await this.vehicleModel
+      .aggregate([
+        {
+          $lookup: getLookupQuery(),
+        },
+        {
+          $match: matchFilter,
+        },
+        {
+          $unset: 'registrationInformation',
+        },
+      ])
+      .exec();
+  }
+
   async getRegisteredVehiclesCount(filter: string, req: any): Promise<any> {
     let centerId: string | string[] = null;
     if (req.data.depId) {
@@ -78,9 +127,14 @@ export class VehicleService {
     }
 
     // check whether the user is a registration center or a department
-    const findFilter = getFindFilterByDate(filter, centerId, null, null);
+    const matchFilter = getFindFilterByDate(filter, centerId, null, null);
     const vehiclesRegisteredWithinFilter: Vehicle[] = await this.vehicleModel
-      .find(findFilter)
+      .aggregate([
+        {
+          $lookup: getLookupQuery(),
+        },
+        { $match: matchFilter },
+      ])
       .exec();
 
     let res: any;
@@ -164,6 +218,8 @@ export class VehicleService {
       startDate?: string;
       endDate?: string;
       getNearExpired?: boolean;
+      provinceCode?: number;
+      districtCode?: number;
     },
     req: any,
   ): Promise<any> {
@@ -184,6 +240,8 @@ export class VehicleService {
       body.endDate ? body.endDate : null,
       null,
       body.getNearExpired,
+      body.provinceCode,
+      body.districtCode,
     );
 
     // console.log('group by vehicle type', matchFilter);
@@ -192,6 +250,9 @@ export class VehicleService {
 
     return this.vehicleModel
       .aggregate([
+        {
+          $lookup: getLookupQuery(),
+        },
         {
           $match: matchFilter,
         },
@@ -225,6 +286,8 @@ export class VehicleService {
       startDate: string;
       endDate: string;
       getNearExpired?: boolean;
+      provinceCode?: number;
+      districtCode?: number;
     },
     req: any,
   ): Promise<any> {
@@ -245,6 +308,8 @@ export class VehicleService {
       body.endDate,
       body.vehicleType,
       body.getNearExpired,
+      body.provinceCode,
+      body.districtCode,
     );
 
     // console.log(matchFilter);
@@ -258,7 +323,9 @@ export class VehicleService {
         filterType = Flags.FILTER_BY_DAY;
         groupId = {
           $dateFromString: {
-            dateString: '$registrationDate',
+            dateString: `$registration${
+              body.getNearExpired ? 'Expiration' : ''
+            }Date`,
           },
         };
       } else {
@@ -268,14 +335,18 @@ export class VehicleService {
             isoWeekYear: {
               $year: {
                 $dateFromString: {
-                  dateString: '$registrationDate',
+                  dateString: `$registration${
+                    body.getNearExpired ? 'Expiration' : ''
+                  }Date`,
                 },
               },
             },
             isoWeek: {
               $week: {
                 $dateFromString: {
-                  dateString: '$registrationDate',
+                  dateString: `$registration${
+                    body.getNearExpired ? 'Expiration' : ''
+                  }Date`,
                 },
               },
             },
@@ -289,14 +360,18 @@ export class VehicleService {
           year: {
             $year: {
               $dateFromString: {
-                dateString: '$registrationDate',
+                dateString: `$registration${
+                  body.getNearExpired ? 'Expiration' : ''
+                }Date`,
               },
             },
           },
           month: {
             $month: {
               $dateFromString: {
-                dateString: '$registrationDate',
+                dateString: `$registration${
+                  body.getNearExpired ? 'Expiration' : ''
+                }Date`,
               },
             },
           },
@@ -311,6 +386,9 @@ export class VehicleService {
 
     return this.vehicleModel
       .aggregate([
+        {
+          $lookup: getLookupQuery(),
+        },
         { $match: matchFilter },
         { $group: groupAggregation },
         { $sort: { _id: 1 } },
@@ -365,6 +443,7 @@ export class VehicleService {
 
   async getNearExpiredVehicles(req: any): Promise<Vehicle[]> {
     let centerId: string | string[] = null;
+
     if (req.data.depId) {
       const centers = await this.registrationCenterService.findByDepId(
         req.data._id,
@@ -373,55 +452,53 @@ export class VehicleService {
     } else if (req.data.centerId) {
       centerId = req.data.centerId;
     }
-    const currentDate = new Date();
-    const nextMonth = new Date(
-      currentDate.setMonth(currentDate.getMonth() + 1),
+
+    const matchFilter = getFindFilterByDate(
+      null,
+      centerId,
+      null,
+      null,
+      null,
+      true,
     );
-    return this.vehicleModel
-      .find({
-        $and: [
-          {
-            $expr: {
-              $gte: [
-                {
-                  $dateFromString: {
-                    dateString: '$registrationExpirationDate',
-                  },
-                },
-                new Date(),
-              ],
-            },
-          },
-          {
-            $expr: {
-              $lte: [
-                {
-                  $dateFromString: {
-                    dateString: '$registrationExpirationDate',
-                  },
-                },
-                new Date(nextMonth),
-              ],
-            },
-          },
-          {
-            registrationCenterId:
-              typeof centerId === 'string' ? centerId : { $in: centerId },
-          },
-        ],
-      })
+
+    return await this.vehicleModel
+      .aggregate([
+        {
+          $lookup: getLookupQuery(),
+        },
+        { $match: matchFilter },
+      ])
       .exec();
   }
 
   async create(vehicle: IVehicle): Promise<Vehicle> {
+    if (!isIVehicle(vehicle)) {
+      throw new BadRequestException('Invalid vehicle data');
+    }
+    if (!checkLicensePlateAndRegNumValidity(vehicle.licensePlate, '')[0]) {
+      throw new BadRequestException(
+        'Invalid license plate. Please check the license plate and try again.',
+      );
+    }
+    if (
+      !checkLicensePlateAndRegNumValidity('', vehicle.registrationNumber)[1]
+    ) {
+      throw new BadRequestException(
+        'Invalid registration number. Please check the license plate and try again.',
+      );
+    }
+    const ownerCids = await this.vehicleOwnerService.getAllOwnerCids();
+    if (!ownerCids.includes(vehicle.vehicleOwnerCid)) {
+      throw new BadRequestException('Owner CID does not exist');
+    }
     vehicle.registrationExpirationDate = getVehicleRegExpirationDate(vehicle);
-
     const newVehicle = new this.vehicleModel(vehicle);
     return newVehicle.save();
   }
 
-  async createMany(vehicles: IVehicle[]): Promise<void> {
-    const res = await this.vehicleModel.insertMany(vehicles);
+  async createMany(vehicles: IVehicle[]): Promise<Vehicle[]> {
+    return await this.vehicleModel.insertMany(vehicles);
   }
 
   async createVehicleFromCertificate(data) {
@@ -433,7 +510,7 @@ export class VehicleService {
     }
   }
 
-  async uploadVehicles(file: Express.Multer.File): Promise<void> {
+  async uploadVehicles(file: Express.Multer.File): Promise<Vehicle[]> {
     try {
       const vehicleJson = xlsxToJson(file.path);
       const remodeledVehicleJson = await this.remodelJsonData(vehicleJson);
@@ -457,27 +534,40 @@ export class VehicleService {
       'public_transportation',
     ];
     const fakeData: IVehicle[] = [];
-    const registrationCenters: any[] =
+    const registrationCenters: RegistrationCenter[] =
       await this.registrationCenterService.findAll();
     const owners: any[] = await this.vehicleOwnerService.findAll();
+    const provinces = await this.provinceService.getProvinces();
 
     const registrationCentersIds: string[] = registrationCenters.map(
       (center) => center.centerId,
     );
     const ownersIds: string[] = owners.map((owner) => owner.cid);
 
-    for (let i = 0; i < 10; i++) {
+    for (let i = 0; i < 1000; i++) {
       const randomCenterIndex = Math.floor(
         Math.random() * registrationCentersIds.length,
       );
+      const vehicleRegProvince = provinces.find(
+        (province) =>
+          province.code === registrationCenters[randomCenterIndex].provinceCode,
+      );
+      const vehicleRegDistrict = vehicleRegProvince.districts.find(
+        (district) =>
+          district.code === registrationCenters[randomCenterIndex].districtCode,
+      );
+
+      // const vehicleRegLocation = `${vehicleRegProvince.name}, ${vehicleRegDistrict.name}, ${registrationCenters[randomCenterIndex].location}`;
+      const vehicleRegLocation = `${provinces[0].name}, ${provinces[0].districts[2].name}, Dong Da`;
+
       const randomOwnerIndex = Math.floor(Math.random() * ownersIds.length);
       const randomVehicleTypeIndex = Math.floor(Math.random() * 3);
       const randomLicensePlate = `${faker.datatype.number({
-        min: 25,
-        max: 35,
+        min: 15,
+        max: 55,
       })}E-${faker.random.numeric(5)}`;
       const randomVehicleVersion = faker.date
-        .between('2020-01-01', '2023-01-01')
+        .between('2020-06-01', '2022-01-01')
         .getFullYear()
         .toString();
       const fakeVehicle: IVehicle = {
@@ -485,7 +575,7 @@ export class VehicleService {
         vin: faker.vehicle.vin(),
         registrationNumber: randomLicensePlate,
         registrationDate: faker.date
-          .between(`${randomVehicleVersion}-01-01`, new Date().toISOString())
+          .between(`${randomVehicleVersion}-01-01`, '2022-12-30')
           .toISOString(),
         // registrationDate: faker.date
         //   .between(
@@ -493,7 +583,7 @@ export class VehicleService {
         //     new Date().toISOString(),
         //   )
         //   .toISOString(),
-        registrationLocation: faker.address.city(),
+        registrationLocation: vehicleRegLocation,
         vehicleType: vehicleTypes[randomVehicleTypeIndex],
         // vehicleType: 'car',
         purpose: purposes[randomVehicleTypeIndex],
@@ -508,8 +598,8 @@ export class VehicleService {
         emission: faker.datatype.number({ min: 4, max: 7 }),
         mileage: faker.datatype.number({ min: 100, max: 100000 }),
         vehicleOwnerCid: ownersIds[randomOwnerIndex],
-        registrationCenterId: registrationCentersIds[randomCenterIndex],
-        // registrationCenterId: '654321',
+        // registrationCenterId: registrationCentersIds[randomCenterIndex],
+        registrationCenterId: '654321',
       };
       fakeVehicle.registrationExpirationDate =
         getVehicleRegExpirationDate(fakeVehicle);
@@ -527,10 +617,15 @@ export class VehicleService {
   async remodelJsonData(json: any[]): Promise<IVehicle[]> {
     const existingVehicles = await this.findAll();
     const ownerCids = await this.vehicleOwnerService.getAllOwnerCids();
+    const allCenters = await this.registrationCenterService.findAll();
+    const provinces = await this.provinceService.getProvinces();
     const newOwners: IVehicleOwner[] = [];
     const newVehicles: IVehicle[] = [];
     const existingVehiclesLicensePlates: string[] = existingVehicles.map(
       (vehicle) => vehicle.licensePlate,
+    );
+    const existingVehiclesRegistrationNumbers: string[] = existingVehicles.map(
+      (vehicle) => vehicle.registrationNumber,
     );
     const existingVehiclesVins: string[] = existingVehicles.map(
       (vehicle) => vehicle.vin,
@@ -543,18 +638,49 @@ export class VehicleService {
           'Invalid excel file. Please check the file and try again.',
         );
       }
+
       // check for existing license plates and vins
       if (existingVehiclesLicensePlates.includes(data.licensePlate)) {
         throw new BadRequestException(
           `License plate ${data.licensePlate} already exists.`,
         );
       } else {
+        if (!checkLicensePlateAndRegNumValidity(data.licensePlate, '')[0]) {
+          throw new BadRequestException(
+            `Invalid license plate ${data.licensePlate}. Please check the license plate and try again.`,
+          );
+        }
         existingVehiclesLicensePlates.push(data.licensePlate);
+      }
+      if (
+        existingVehiclesRegistrationNumbers.includes(data.registrationNumber)
+      ) {
+        throw new BadRequestException(
+          `Registration number ${data.registrationNumber} already exists.`,
+        );
+      } else {
+        if (
+          !checkLicensePlateAndRegNumValidity('', data.registrationNumber)[1]
+        ) {
+          throw new BadRequestException(
+            `Invalid registration number ${data.registrationNumber}. Please check the license plate and try again.`,
+          );
+        }
+        existingVehiclesRegistrationNumbers.push(data.registrationNumber);
       }
       if (existingVehiclesVins.includes(data.vin)) {
         throw new BadRequestException(`VIN ${data.vin} already exists.`);
       } else {
         existingVehiclesVins.push(data.vin);
+      }
+
+      const currentCenter: RegistrationCenter | undefined = allCenters.find(
+        (center) => center.centerId === data.registrationCenterId.toString(),
+      );
+      if (!currentCenter) {
+        throw new BadRequestException(
+          `Registration center ${data.registrationCenterId} does not exist.`,
+        );
       }
 
       const newVehicle: IVehicle = {
@@ -569,7 +695,10 @@ export class VehicleService {
           ? data.registrationDate
           : new Date(getJsDateFromExcel(data.registrationDate)).toISOString(),
         registrationCenterId: data.registrationCenterId.toString(),
-        registrationLocation: data.registrationLocation,
+        registrationLocation: getRegistrationCenterFullAddress(
+          currentCenter,
+          provinces,
+        ),
         purpose: data.purpose,
         width: data.width,
         length: data.length,
@@ -614,111 +743,117 @@ function getFindFilterByDate(
   endDate?: string,
   vehicleType?: string,
   getNearExpired?: boolean,
+  provinceCode?: number,
+  districtCode?: number,
 ) {
-  let findFilter = {};
-  if (filter === Flags.FILTER_BY_DATE_RANGE) {
-    findFilter = {
-      $and: [
-        {
-          $expr: {
-            $gte: [
-              {
-                $dateFromString: { dateString: '$registrationDate' },
-              },
-              new Date(startDate),
-            ],
-          },
-        },
-        {
-          $expr: {
-            $lte: [
-              {
-                $dateFromString: { dateString: '$registrationDate' },
-              },
-              new Date(endDate),
-            ],
-          },
-        },
-      ],
-    };
-  } else if (filter === Flags.FILTER_BY_WEEK) {
-    findFilter = {
-      $and: [
-        {
-          $expr: {
-            $eq: [
-              {
-                $week: {
+  let findFilter = { $and: [] };
+  if (!getNearExpired) {
+    if (filter === Flags.FILTER_BY_DATE_RANGE) {
+      findFilter = {
+        $and: [
+          {
+            $expr: {
+              $gte: [
+                {
                   $dateFromString: { dateString: '$registrationDate' },
                 },
-              },
-              getCurrentWeekOfYear(),
-            ],
+                new Date(startDate),
+              ],
+            },
           },
-        },
-        {
-          $expr: {
-            $eq: [
-              {
-                $year: {
+          {
+            $expr: {
+              $lte: [
+                {
                   $dateFromString: { dateString: '$registrationDate' },
                 },
-              },
-              new Date().getFullYear(),
-            ],
+                new Date(endDate),
+              ],
+            },
           },
-        },
-      ],
-    };
-  } else if (filter === Flags.FILTER_BY_MONTH) {
-    findFilter = {
-      $and: [
-        {
-          $expr: {
-            $eq: [
-              {
-                $year: {
-                  $dateFromString: { dateString: '$registrationDate' },
+        ],
+      };
+    } else if (filter === Flags.FILTER_BY_WEEK) {
+      findFilter = {
+        $and: [
+          {
+            $expr: {
+              $eq: [
+                {
+                  $week: {
+                    $dateFromString: { dateString: '$registrationDate' },
+                  },
                 },
-              },
-              new Date().getFullYear(),
-            ],
+                getCurrentWeekOfYear(),
+              ],
+            },
           },
-        },
-        {
-          $expr: {
-            $eq: [
-              {
-                $month: {
-                  $dateFromString: { dateString: '$registrationDate' },
+          {
+            $expr: {
+              $eq: [
+                {
+                  $year: {
+                    $dateFromString: { dateString: '$registrationDate' },
+                  },
                 },
-              },
-              new Date().getMonth() + 1, // + 1 because $month and Date.getMonth() return different values,
-            ],
+                new Date().getFullYear(),
+              ],
+            },
           },
-        },
-      ],
-    };
-  } else if (filter === Flags.FILTER_BY_YEAR) {
-    findFilter = {
-      $and: [
-        {
-          $expr: {
-            $eq: [
-              {
-                $year: { $dateFromString: { dateString: '$registrationDate' } },
-              },
-              new Date().getFullYear(),
-            ],
+        ],
+      };
+    } else if (filter === Flags.FILTER_BY_MONTH) {
+      findFilter = {
+        $and: [
+          {
+            $expr: {
+              $eq: [
+                {
+                  $year: {
+                    $dateFromString: { dateString: '$registrationDate' },
+                  },
+                },
+                new Date().getFullYear(),
+              ],
+            },
           },
-        },
-      ],
-    };
+          {
+            $expr: {
+              $eq: [
+                {
+                  $month: {
+                    $dateFromString: { dateString: '$registrationDate' },
+                  },
+                },
+                new Date().getMonth() + 1, // + 1 because $month and Date.getMonth() return different values,
+              ],
+            },
+          },
+        ],
+      };
+    } else if (filter === Flags.FILTER_BY_YEAR) {
+      findFilter = {
+        $and: [
+          {
+            $expr: {
+              $eq: [
+                {
+                  $year: {
+                    $dateFromString: { dateString: '$registrationDate' },
+                  },
+                },
+                new Date().getFullYear(),
+              ],
+            },
+          },
+        ],
+      };
+    }
   }
 
   if (centerId) {
     findFilter['$and'].push({
-      registrationCenterId:
+      'registrationInformation.centerId':
         typeof centerId === 'string' ? centerId : { $in: centerId },
     });
   }
@@ -761,7 +896,30 @@ function getFindFilterByDate(
       ],
     );
   }
+
+  if (provinceCode) {
+    findFilter['$and'].push({
+      'registrationInformation.provinceCode': provinceCode,
+    });
+  }
+
+  if (districtCode) {
+    findFilter['$and'].push({
+      'registrationInformation.districtCode': districtCode,
+    });
+  }
+
   return findFilter;
+}
+
+/**Returns the query for lookup in mongoDB aggregation pipeline (for joining vahicles and registrationcenters entities) */
+function getLookupQuery() {
+  return {
+    from: 'registrationcenters',
+    localField: 'registrationCenterId',
+    foreignField: 'centerId',
+    as: 'registrationInformation',
+  };
 }
 
 function getVehicleRegExpirationDate(vehicle: IVehicle): string {
@@ -820,4 +978,12 @@ function getVehicleRegExpirationDate(vehicle: IVehicle): string {
   }
 
   return expirationDate;
+}
+
+function checkLicensePlateAndRegNumValidity(
+  licensePlate: string,
+  regNum: string,
+): boolean[] {
+  const licensePlateRegex = new RegExp(/[0-9]{2}[A-Z]{1}-[0-9]{4,5}/);
+  return [licensePlateRegex.test(licensePlate), licensePlateRegex.test(regNum)];
 }
